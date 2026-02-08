@@ -1,0 +1,10 @@
+riders:
+  # Liste der Reiter, die gesucht werden sollen.
+  - Jane Doe
+
+horses:
+  # Liste der Pferde, die gesucht werden sollen
+  - Calipso
+
+countries:
+  - Deutschland
