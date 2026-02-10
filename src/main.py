@@ -75,11 +75,12 @@ def get_starterliste(event_url):
         if not rider_name in found_riders:
             found_riders.append(rider_name)
  
-        horse_name = rider_div.select_one(".box_horse b")
-        if horse_name:
-            horse_name = horse_name.get_text(strip=True)
-        if horse_name and not horse_name in found_horses:
-            found_horses.append(horse_name)
+        horse_names = rider_div.select(".box_horse b")
+        for horse_name in horse_names:
+            if horse_name:
+                horse_name = horse_name.get_text(strip=True)
+            if horse_name and not horse_name in found_horses:
+                found_horses.append(horse_name)
 
        # print(found_riders)
     return {
@@ -97,11 +98,15 @@ if __name__ == "__main__":
     riders = config["riders"]
 
     events = get_events()
-    no_of_events = len(events)
     # with open("event_cache_testing.json") as f:
     #     events = json.load(f)
     # events = json.load("event_cache_testing.json")
-    result_dict = {}
+    no_of_events = len(events)
+    print(f"Found {no_of_events} Events.")
+    result_dict = {
+        "pferde": {},
+        "reiter": {}
+    }
     for i, event in enumerate(events):
         starterliste = get_starterliste(event["link"])
         for reiter in starterliste["reiter"]:
@@ -112,13 +117,18 @@ if __name__ == "__main__":
             namen.reverse()
             reiter_name = " ".join(namen)
             if reiter_name in riders:
-                if not reiter_name in result_dict:
-                    result_dict[reiter_name] = []
-                result_dict[reiter_name].append(event["location"]+" "+event["date"])
+                if not reiter_name in result_dict["reiter"]:
+                    result_dict["reiter"][reiter_name] = []
+                result_dict["reiter"][reiter_name].append(event["location"]+" "+event["date"])
             
 
-        for horse in starterliste["pferde"]:
-            pass
+        for horse_name in starterliste["pferde"]:
+            if not horses:
+                break
+            if horse_name in horses:
+                if not horse_name in result_dict["pferde"]:
+                    result_dict["pferde"][horse_name] = []
+                result_dict["pferde"][horse_name].append(event["location"]+" "+event["date"])
 
         print(f"Progress: {'{:.1%}'.format(i/no_of_events)}")
     print("DONE")
