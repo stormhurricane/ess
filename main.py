@@ -1,25 +1,15 @@
 import yaml
-
 import requests
 import time 
 import random
+import re
+import json
+import hashlib
 
 from bs4 import BeautifulSoup
-import re
-
-import json
-
-COUNTRY_MAP = {
-    "Deutschland": {
-        "kurzel": "GER"
-    }
-}
-
-BASE = "https://www.equi-score.de/"
-
-import hashlib
-import os
 from pathlib import Path
+
+BASE_URL = "https://www.equi-score.de/"
 
 CACHE_DIR = Path(".cache")
 CACHE_DIR.mkdir(exist_ok=True)
@@ -47,8 +37,8 @@ def fetch(url: str, use_cache=True) -> str:
 
     return html
 
-def get_events(config = None):
-    html = fetch(BASE)
+def get_events():
+    html = fetch(BASE_URL)
 
     soup = BeautifulSoup(html, "html.parser")
     
@@ -85,8 +75,7 @@ def get_events(config = None):
 
 def normalize_name(name: str) -> str:
     name = name.lower().strip()
-
-    # "mustermann, max" → "max mustermann"
+    
     if "," in name:
         parts = [p.strip() for p in name.split(",")]
         name = " ".join(parts[::-1])
@@ -128,8 +117,10 @@ def rider_matches(found: str, search: str) -> bool:
 
 def normalize_horse(name: str) -> str:
     name = name.lower().strip()
+    # ohne Nummern
     name = re.sub(r"\s\d+$", "", name)
     return name
+
 
 def get_starterliste(event_url):
     rider_url = event_url.replace("/event/", "/riders/")
@@ -153,8 +144,8 @@ def get_starterliste(event_url):
                 found_horses.append(horse_name)
 
     return {
-        "pferde": found_horses,
-        "reiter": found_riders
+        "gefundene_pferde": found_horses,
+        "gefundene_reiter": found_riders
     }
 
 
@@ -163,30 +154,30 @@ def get_starterliste(event_url):
 if __name__ == "__main__":
     with open("config.yaml") as f:
         config = yaml.safe_load(f)
-    horses = config["horses"]
-    horses = [normalize_horse(x) for x in horses]
-    riders = [normalize_name(x) for x in config["riders"]]
+    list_of_horses = config["horses"]
+    list_of_horses = [normalize_horse(x) for x in list_of_horses]
+    list_of_riders = [normalize_name(x) for x in config["riders"]]
 
     def build_rider_index(riders):
         index = {}
-        for r in riders:
+        for r in list_of_riders:
             last = r.split()[-1]
             index.setdefault(last, []).append(r)
         return index
 
-    rider_index = build_rider_index(riders)
+    rider_index = build_rider_index(list_of_riders)
 
     events = get_events()
     no_of_events = len(events)
     print(f"Found {no_of_events} Events.")
     result_dict = {
-        "pferde": {},
-        "reiter": {}
+        "gefundene_pferde": {},
+        "gefundene_reiter": {}
     }
     for i, event in enumerate(events):
         starterliste = get_starterliste(event["link"])
-        for reiter in starterliste["reiter"]:
-            norm = normalize_name(reiter)
+        for gefundener_reiter in starterliste["gefundene_reiter"]:
+            norm = normalize_name(gefundener_reiter)
             last = norm.split()[-1]
 
 
@@ -194,23 +185,23 @@ if __name__ == "__main__":
                 continue
 
             for rider in rider_index[last]:
-                if rider_matches(reiter, rider):
-                    if rider.title() not in result_dict["reiter"]:
-                        result_dict["reiter"][rider.title()] = []
+                if rider_matches(gefundener_reiter, rider):
+                    if rider.title() not in result_dict["gefundene_reiter"]:
+                        result_dict["gefundene_reiter"][rider.title()] = []
 
                     event_label = f"{event['location']} {event['date']} ({event['link']})"
-                    result_dict["reiter"][rider.title()].append(event_label)
+                    result_dict["gefundene_reiter"][rider.title()].append(event_label)
                     break
             
 
-        for horse_name in starterliste["pferde"]:
-            if not horses:
+        for horse_name in starterliste["gefundene_pferde"]:
+            if not list_of_horses:
                 break
-            for pferd in horses:
+            for pferd in list_of_horses:
                 if normalize_horse(horse_name) == normalize_horse(pferd):
-                    if not horse_name in result_dict["pferde"]:
-                        result_dict["pferde"][horse_name] = []
-                    result_dict["pferde"][horse_name].append(event["location"]+" ("+event["date"]+") Link: "+event["link"])
+                    if not horse_name in result_dict["gefundene_pferde"]:
+                        result_dict["gefundene_pferde"][horse_name] = []
+                    result_dict["gefundene_pferde"][horse_name].append(event["location"]+" ("+event["date"]+") Link: "+event["link"])
                     break
 
         print(f"Progress: {'{:.1%}'.format((i+1)/no_of_events)}")
@@ -218,5 +209,4 @@ if __name__ == "__main__":
 
     with open('result.json', 'w', encoding='utf-8') as f:
         json.dump(result_dict, f, ensure_ascii=False, indent=4)    
-    # class box_title, "Woche" In div (Diese oder nächste)
-    # vielleicht matchingm iwe viele (ist in klammern)
+        
