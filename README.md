@@ -65,7 +65,7 @@ nations:
 
 ### Config und Repo
 
-- [ ] `config.yaml` gitignoren, `config.example.yaml` mit Platzhaltern committen
+- [x] `config.yaml` gitignoren, `config.example.yaml` mit Platzhaltern committen
 - [ ] `countries` nutzen oder entfernen; Nationen aus der Config lesen (`GER` statt Hardcode)
 - [ ] optionale Keys: Cache-TTL, Output-Pfad, Request-Delay
 - [ ] Reiter/Pferde aktivierbar machen, statt auskommentierter Listen

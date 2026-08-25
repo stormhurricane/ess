@@ -205,3 +205,7 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Local ESS config and output (use config.example.yaml as template)
+config.yaml
+result.json
