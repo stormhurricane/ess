@@ -8,11 +8,25 @@ import hashlib
 
 from bs4 import BeautifulSoup
 from pathlib import Path
+from urllib3.exceptions import InsecureRequestWarning
+requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 BASE_URL = "https://www.equi-score.de/"
+HEADERS = {
+    "User-Agent": "Mozilla/5.0",
+    "Accept-Language": "de-DE,de;q=0.9",
+}
+NATION = "GER"
+# Skips finished events older than 14 days
+FINISHED_KEEP_SECONDS = 14 * 24 * 3600
 
 CACHE_DIR = Path(".cache")
 CACHE_DIR.mkdir(exist_ok=True)
+
+NEXT_F_PUSH = re.compile(
+    r'self\.__next_f\.push\(\[1,"((?:\\.|[^"\\])*)"\]\)'
+)
+
 
 def is_fresh(path, hours=6):
     age = time.time() - path.stat().st_mtime
@@ -26,52 +40,150 @@ def fetch(url: str, use_cache=True) -> str:
     path = cache_path(url)
 
     if use_cache and path.exists() and is_fresh(path):
-        return path.read_text()
+        return path.read_text(encoding="utf-8")
 
     time.sleep(random.uniform(1, 2))
-    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+    r = requests.get(url, headers=HEADERS, verify=False, timeout=30)
     r.raise_for_status()
 
     html = r.text
-    path.write_text(html)
+    path.write_text(html, encoding="utf-8")
 
     return html
+
+
+def prefer_german_url(url: str) -> str:
+    if url.endswith("/en"):
+        return url[:-3] + "/de"
+    return url
+
+
+def riders_url(event_url: str) -> str:
+    return prefer_german_url(event_url.replace("/event/", "/riders/"))
+
+
+def next_f_strings(html: str) -> list[str]:
+    chunks = []
+    for raw in NEXT_F_PUSH.findall(html):
+        try:
+            chunks.append(json.loads(f'"{raw}"'))
+        except json.JSONDecodeError:
+            continue
+    return chunks
+
+
+def parse_embedded_events(html: str) -> list[dict]:
+    decoder = json.JSONDecoder()
+    for chunk in next_f_strings(html):
+        marker = '"events":['
+        idx = chunk.find(marker)
+        if idx == -1:
+            continue
+        try:
+            events, _ = decoder.raw_decode(chunk[idx + len('"events":'):])
+        except json.JSONDecodeError:
+            continue
+        if (
+            isinstance(events, list)
+            and events
+            and isinstance(events[0], dict)
+            and "href" in events[0]
+        ):
+            return events
+    return []
+
+
+def parse_events_from_dom(html: str) -> list[dict]:
+    """Fallback: nur die im HTML gerenderten Zeilen (erste zwei Wochen)."""
+    soup = BeautifulSoup(html, "html.parser")
+    events = []
+    for a in soup.select("a.event-row"):
+        href = a.get("href")
+        if not href or "/event/" not in href:
+            continue
+        meta = a.select_one(".event-meta")
+        place, date = "", "Jetzt"
+        if meta:
+            text = meta.get_text(" ", strip=True)
+            if "·" in text:
+                place, date = [p.strip() for p in text.split("·", 1)]
+            else:
+                place = text
+        flag = a.select_one(".flag[title], .event-list-flag[title]")
+        nation = NATION
+        if flag and flag.get("title"):
+            title = flag.get("title", "").lower()
+            if title and "deutsch" not in title and "germany" not in title:
+                continue
+        events.append({
+            "link": prefer_german_url(href),
+            "nation": nation,
+            "date": date,
+            "location": place,
+        })
+    return events
+
+
+def event_is_relevant(event: dict, nation: str = NATION) -> bool:
+    if event.get("country") != nation:
+        return False
+    href = event.get("href") or ""
+    if "/event/" not in href:
+        return False
+    if event.get("state") != "finished":
+        return True
+    week_start = event.get("weekStart") or 0
+    return week_start >= time.time() - FINISHED_KEEP_SECONDS
+
+
+def to_event_record(event: dict) -> dict:
+    date = (event.get("date") or "").strip() or "Jetzt"
+    location = (event.get("place") or event.get("title") or "").strip()
+    return {
+        "link": prefer_german_url(event.get("href") or ""),
+        "nation": event.get("country"),
+        "date": date,
+        "location": location,
+        "state": event.get("state"),
+    }
+
 
 def get_events():
     html = fetch(BASE_URL)
 
-    soup = BeautifulSoup(html, "html.parser")
-    
-    events = []
+    embedded = parse_embedded_events(html)
+    if embedded:
+        return [to_event_record(e) for e in embedded if event_is_relevant(e)]
 
+    # Alte Startseite (a.evt_box) oder sichtbare Zeilen der neuen Seite
+    soup = BeautifulSoup(html, "html.parser")
+    events = []
     for a in soup.select("a.evt_box"):
         inner = a.find("div")
         if not inner:
             continue
         nation = inner.get("data-nation")
         #FIXME bessere config nutzung
-        if nation != "GER":
+        if nation != NATION:
             continue
-            
-        date = inner.find("div", class_="evt_date")
-        if date:
-            date = date.text
-        else:
-            date = "Jetzt"
-        location = inner.find("div", class_="evt_locator").text
 
-        
+        date_el = inner.find("div", class_="evt_date")
+        date = date_el.get_text(strip=True) if date_el else "Jetzt"
+        locator = inner.find("div", class_="evt_locator")
+        location = locator.get_text(strip=True) if locator else ""
         href = a.get("href")
-        event = {
-            "link": href,
+        if not href:
+            continue
+        events.append({
+            "link": prefer_german_url(href),
             "nation": nation,
             "date": date,
-            "location": location
+            "location": location,
+        })
+    if events:
+        return events
 
-        }
-        events.append(event)
-    
-    return events
+    return parse_events_from_dom(html)
 
 def normalize_name(name: str) -> str:
     name = name.lower().strip()
@@ -123,7 +235,7 @@ def normalize_horse(name: str) -> str:
 
 
 def get_starterliste(event_url):
-    rider_url = event_url.replace("/event/", "/riders/")
+    rider_url = riders_url(event_url)
     html = fetch(rider_url)
     rider_soup = BeautifulSoup(html, "html.parser")
 
@@ -175,7 +287,11 @@ if __name__ == "__main__":
         "gefundene_reiter": {}
     }
     for i, event in enumerate(events):
-        starterliste = get_starterliste(event["link"])
+        try:
+            starterliste = get_starterliste(event["link"])
+        except Exception as exc:
+            print(f"Skip {event.get('location')}: {exc}")
+            continue
         for gefundener_reiter in starterliste["gefundene_reiter"]:
             norm = normalize_name(gefundener_reiter)
             last = norm.split()[-1]

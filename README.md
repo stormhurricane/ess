@@ -25,11 +25,13 @@ python main.py
 
 Das Skript:
 
-1. lädt die Event-Übersicht
-2. filtert nach Nation (aktuell hart auf `GER`)
+1. lädt die Event-Übersicht aus dem Next.js-Payload (alle Wochen, nicht nur die ersten zwei im UI)
+2. filtert nach Nation (aktuell hart auf `GER`); beendete Turniere älter als 14 Tage entfallen
 3. holt je Event die Starterliste (`/riders/`)
 4. gleicht Namen mit der Config ab
 5. schreibt Treffer nach `result.json`
+
+Die öffentliche Startseite paginiert (`Load more`) und zeigt standardmäßig nur die aktuelle plus die letzte Kalenderwoche. Die Eventliste selbst steckt vollständig in der Seite — der Scraper liest diese Payload statt sichtbarer HTML-Karten.
 
 HTTP-Antworten werden unter `.cache/` für 6 Stunden zwischengespeichert.
 Zwischen Requests liegt eine Pause von 1–2 Sekunden.
