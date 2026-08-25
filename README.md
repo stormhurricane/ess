@@ -26,15 +26,20 @@ python main.py
 Das Skript:
 
 1. lädt die Event-Übersicht aus dem Next.js-Payload (alle Wochen, nicht nur die ersten zwei im UI)
-2. filtert nach Nation (aktuell hart auf `GER`); beendete Turniere älter als 14 Tage entfallen
-3. holt je Event die Starterliste (`/riders/`)
+2. filtert nach Nation (`GER`) und Zeitfenster: **letztes Wochenende** (Vergangenheit) plus das **nächste Wochenende** (jeweils die ganze Kalenderwoche)
+3. holt je Event die Starterliste (`/riders/`); ist die leer, die Klassen-`startlist`/`resultlist`-Seiten
 4. gleicht Namen mit der Config ab
 5. schreibt Treffer nach `result.json`
 
 Die öffentliche Startseite paginiert (`Load more`) und zeigt standardmäßig nur die aktuelle plus die letzte Kalenderwoche. Die Eventliste selbst steckt vollständig in der Seite — der Scraper liest diese Payload statt sichtbarer HTML-Karten.
 
+Viele Turniere lassen `/riders/` leer; Reiter und Pferde stehen dann nur in den Prüfungs-Start-/Ergebnislisten. Der Scraper fällt in dem Fall darauf zurück (bevorzugt `startlist`).
+
 HTTP-Antworten werden unter `.cache/` für 6 Stunden zwischengespeichert.
-Zwischen Requests liegt eine Pause von 1–2 Sekunden.
+Leere `/riders/`-Seiten nur **15 Minuten** (Listen werden oft später nachgeliefert).
+Requests laufen parallel (Events + Startlisten), begrenzt auf max. 8 gleichzeitige
+Verbindungen, mit kurzer Pause (0,2–0,5 s) pro Netz-Request. Pro Worker-Thread
+wird eine `requests.Session` mit Keep-Alive wiederverwendet.
 
 ## Konfiguration
 

@@ -5,9 +5,13 @@ import random
 import re
 import json
 import hashlib
+import threading
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import date, datetime, timedelta, timezone
 from bs4 import BeautifulSoup
 from pathlib import Path
+from urllib.parse import urljoin
 from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
@@ -17,18 +21,40 @@ HEADERS = {
     "Accept-Language": "de-DE,de;q=0.9",
 }
 NATION = "GER"
-# Skips finished events older than 14 days
-FINISHED_KEEP_SECONDS = 14 * 24 * 3600
+# Last fully past weekend + this many upcoming weekends (by calendar week)
+PAST_WEEKENDS = 1
+FUTURE_WEEKENDS = 1
+# Concurrent HTTP: events in parallel, list pages in parallel, global cap
+EVENT_WORKERS = 4
+FETCH_WORKERS = 6
+MAX_IN_FLIGHT = 8
+REQUEST_DELAY = (0.2, 0.5)
 
 CACHE_DIR = Path(".cache")
 CACHE_DIR.mkdir(exist_ok=True)
+CACHE_HOURS = 6
+# Empty /riders/ pages fill in later; don't keep them warm for hours.
+EMPTY_RIDERS_CACHE_HOURS = 0.25
 
 NEXT_F_PUSH = re.compile(
     r'self\.__next_f\.push\(\[1,"((?:\\.|[^"\\])*)"\]\)'
 )
+_http_slots = threading.Semaphore(MAX_IN_FLIGHT)
+_thread_local = threading.local()
 
 
-def is_fresh(path, hours=6):
+def get_http_session() -> requests.Session:
+    """One Session per thread so Keep-Alive works safely with parallel fetches."""
+    session = getattr(_thread_local, "session", None)
+    if session is None:
+        session = requests.Session()
+        session.headers.update(HEADERS)
+        session.verify = False
+        _thread_local.session = session
+    return session
+
+
+def is_fresh(path, hours=CACHE_HOURS):
     age = time.time() - path.stat().st_mtime
     return age < hours * 3600
 
@@ -36,19 +62,29 @@ def cache_path(url: str) -> Path:
     h = hashlib.md5(url.encode()).hexdigest()
     return CACHE_DIR / f"{h}.html"
 
+
+def looks_like_empty_riders_page(html: str) -> bool:
+    return "rider_name" not in html
+
+
 def fetch(url: str, use_cache=True) -> str:
     path = cache_path(url)
 
-    if use_cache and path.exists() and is_fresh(path):
-        return path.read_text(encoding="utf-8")
+    if use_cache and path.exists():
+        cached = path.read_text(encoding="utf-8")
+        hours = CACHE_HOURS
+        if "/riders/" in url and looks_like_empty_riders_page(cached):
+            hours = EMPTY_RIDERS_CACHE_HOURS
+        if is_fresh(path, hours=hours):
+            return cached
 
-    time.sleep(random.uniform(1, 2))
-    r = requests.get(url, headers=HEADERS, verify=False, timeout=30)
-    r.raise_for_status()
+    with _http_slots:
+        time.sleep(random.uniform(*REQUEST_DELAY))
+        r = get_http_session().get(url, timeout=30)
+        r.raise_for_status()
+        html = r.text
 
-    html = r.text
     path.write_text(html, encoding="utf-8")
-
     return html
 
 
@@ -60,6 +96,10 @@ def prefer_german_url(url: str) -> str:
 
 def riders_url(event_url: str) -> str:
     return prefer_german_url(event_url.replace("/event/", "/riders/"))
+
+
+def absolute_url(base_url: str, href: str) -> str:
+    return prefer_german_url(urljoin(base_url, href))
 
 
 def next_f_strings(html: str) -> list[str]:
@@ -124,25 +164,67 @@ def parse_events_from_dom(html: str) -> list[dict]:
     return events
 
 
+def monday_of(day: date) -> date:
+    return day - timedelta(days=day.weekday())
+
+
+def weekend_scope_mondays(
+    today: date | None = None,
+    past_weekends: int = PAST_WEEKENDS,
+    future_weekends: int = FUTURE_WEEKENDS,
+) -> list[date]:
+    """Mondays of: last fully past weekend week + next N upcoming weekend weeks."""
+    today = today or date.today()
+
+    if today.weekday() == 6:  # Sunday → previous week is last fully past weekend
+        last_sunday = today - timedelta(days=7)
+    else:
+        last_sunday = today - timedelta(days=today.weekday() + 1)
+    last_saturday = last_sunday - timedelta(days=1)
+
+    mondays = [monday_of(last_saturday)]
+
+    days_until_saturday = (5 - today.weekday()) % 7
+    if today.weekday() == 5:
+        next_saturday = today
+    elif today.weekday() == 6:
+        next_saturday = today + timedelta(days=6)
+    else:
+        next_saturday = today + timedelta(days=days_until_saturday)
+
+    for i in range(future_weekends):
+        mondays.append(monday_of(next_saturday + timedelta(weeks=i)))
+
+    # preserve order, drop duplicates (e.g. edge cases around week boundaries)
+    seen = set()
+    unique = []
+    for m in mondays:
+        if m not in seen:
+            seen.add(m)
+            unique.append(m)
+    return unique
+
+
 def event_is_relevant(event: dict, nation: str = NATION) -> bool:
     if event.get("country") != nation:
         return False
     href = event.get("href") or ""
     if "/event/" not in href:
         return False
-    if event.get("state") != "finished":
-        return True
-    week_start = event.get("weekStart") or 0
-    return week_start >= time.time() - FINISHED_KEEP_SECONDS
+    week_start = event.get("weekStart")
+    if not week_start:
+        return False
+    event_monday = datetime.fromtimestamp(week_start, tz=timezone.utc).date()
+    return event_monday in set(weekend_scope_mondays())
 
 
 def to_event_record(event: dict) -> dict:
-    date = (event.get("date") or "").strip() or "Jetzt"
+    date_label = (event.get("date") or "").strip() or "Jetzt"
     location = (event.get("place") or event.get("title") or "").strip()
     return {
         "link": prefer_german_url(event.get("href") or ""),
         "nation": event.get("country"),
-        "date": date,
+        "date": date_label,
         "location": location,
         "state": event.get("state"),
     }
@@ -234,45 +316,174 @@ def normalize_horse(name: str) -> str:
     return name
 
 
-def get_starterliste(event_url):
-    rider_url = riders_url(event_url)
-    html = fetch(rider_url)
-    rider_soup = BeautifulSoup(html, "html.parser")
+def _add_unique(items: list[str], value: str) -> None:
+    if value and value not in items:
+        items.append(value)
 
+
+def parse_riders_overview(html: str) -> dict:
+    """Parse /riders/ overview: 'NACHNAME, Vorname' + horses in .box_horse."""
+    soup = BeautifulSoup(html, "html.parser")
     found_riders = []
     found_horses = []
-    for rider_div in rider_soup.select(".rider_name"):
+    for rider_div in soup.select(".rider_name"):
         rider_name = "".join(
             t.strip() for t in rider_div.find_all(string=True, recursive=False)
-        ).strip()        
-        if rider_name and not rider_name in found_riders:
-            found_riders.append(rider_name)
- 
-        horse_names = rider_div.select(".box_horse b")
-        for horse_name in horse_names:
-            if horse_name:
-                horse_name = horse_name.get_text(strip=True)
-            if horse_name and not horse_name in found_horses:
-                found_horses.append(horse_name)
+        ).strip()
+        _add_unique(found_riders, rider_name)
+
+        for horse_el in rider_div.select(".box_horse b"):
+            _add_unique(found_horses, horse_el.get_text(strip=True))
 
     return {
         "gefundene_pferde": found_horses,
-        "gefundene_reiter": found_riders
+        "gefundene_reiter": found_riders,
     }
 
 
+def parse_competition_list(html: str) -> dict:
+    """Parse startlist/resultlist pages: rider in <b>, horse in span.rider_name."""
+    soup = BeautifulSoup(html, "html.parser")
+    found_riders = []
+    found_horses = []
+
+    for cell in soup.select("div.td_cell"):
+        bold = cell.find("b")
+        if not bold:
+            continue
+        # Club/org line sits under the name; skip cells that are only numbers etc.
+        name = bold.get_text(" ", strip=True)
+        if " " not in name:
+            continue
+        _add_unique(found_riders, name)
+
+    for horse_span in soup.select("span.rider_name"):
+        horse_name = horse_span.get_text(" ", strip=True)
+        _add_unique(found_horses, horse_name)
+
+    return {
+        "gefundene_pferde": found_horses,
+        "gefundene_reiter": found_riders,
+    }
+
+
+def competition_list_urls(event_url: str, event_html: str) -> list[str]:
+    """Collect per-class list URLs; prefer startlist over resultlist for same class."""
+    soup = BeautifulSoup(event_html, "html.parser")
+    by_class: dict[str, dict[str, str]] = {}
+
+    for a in soup.select('a[href*="/startlist/"], a[href*="/resultlist/"]'):
+        href = a.get("href") or ""
+        kind = "startlist" if "/startlist/" in href else "resultlist"
+        class_id = href.rstrip("/").split("/")[-1]
+        if not class_id:
+            continue
+        by_class.setdefault(class_id, {})[kind] = absolute_url(event_url, href)
+
+    urls = []
+    for lists in by_class.values():
+        chosen = lists.get("startlist") or lists.get("resultlist")
+        if chosen:
+            urls.append(chosen)
+    return urls
+
+
+def merge_starterlisten(*parts: dict) -> dict:
+    riders = []
+    horses = []
+    for part in parts:
+        for rider in part.get("gefundene_reiter", []):
+            _add_unique(riders, rider)
+        for horse in part.get("gefundene_pferde", []):
+            _add_unique(horses, horse)
+    return {
+        "gefundene_pferde": horses,
+        "gefundene_reiter": riders,
+    }
+
+
+def _fetch_competition_list(list_url: str) -> dict:
+    try:
+        return parse_competition_list(fetch(list_url))
+    except Exception as exc:
+        print(f"  Skip list {list_url}: {exc}")
+        return {"gefundene_pferde": [], "gefundene_reiter": []}
+
+
+def get_starterliste(event_url):
+    event_url = prefer_german_url(event_url)
+    r_url = riders_url(event_url)
+    overview = parse_riders_overview(fetch(r_url))
+    if overview["gefundene_reiter"]:
+        return overview
+
+    # Many events leave /riders/ empty; names live on start/result lists instead.
+    event_html = fetch(event_url)
+    list_urls = competition_list_urls(event_url, event_html)
+    if not list_urls:
+        return overview
+
+    parts = [overview]
+    with ThreadPoolExecutor(max_workers=FETCH_WORKERS) as pool:
+        parts.extend(pool.map(_fetch_competition_list, list_urls))
+    return merge_starterlisten(*parts)
+
+
+def match_event_against_config(event, starterliste, rider_index, list_of_horses):
+    """Return rider/horse hits for one event (thread-safe; no shared mutation)."""
+    riders_hits = {}
+    horses_hits = {}
+
+    for gefundener_reiter in starterliste["gefundene_reiter"]:
+        norm = normalize_name(gefundener_reiter)
+        parts = norm.split()
+        if len(parts) < 2:
+            continue
+        last = parts[-1]
+        if last not in rider_index:
+            continue
+        for rider in rider_index[last]:
+            if rider_matches(gefundener_reiter, rider):
+                label = f"{event['location']} {event['date']} ({event['link']})"
+                riders_hits.setdefault(rider.title(), []).append(label)
+                break
+
+    for horse_name in starterliste["gefundene_pferde"]:
+        if not list_of_horses:
+            break
+        for pferd in list_of_horses:
+            if normalize_horse(horse_name) == normalize_horse(pferd):
+                label = (
+                    event["location"]
+                    + " ("
+                    + event["date"]
+                    + ") Link: "
+                    + event["link"]
+                )
+                horses_hits.setdefault(horse_name, []).append(label)
+                break
+
+    return riders_hits, horses_hits
+
+
+def process_event(event, rider_index, list_of_horses):
+    try:
+        starterliste = get_starterliste(event["link"])
+    except Exception as exc:
+        return event, None, exc
+    hits = match_event_against_config(event, starterliste, rider_index, list_of_horses)
+    return event, hits, None
 
 
 if __name__ == "__main__":
     with open("config.yaml") as f:
         config = yaml.safe_load(f)
-    list_of_horses = config["horses"]
-    list_of_horses = [normalize_horse(x) for x in list_of_horses]
+    list_of_horses = [normalize_horse(x) for x in config["horses"]]
     list_of_riders = [normalize_name(x) for x in config["riders"]]
 
     def build_rider_index(riders):
         index = {}
-        for r in list_of_riders:
+        for r in riders:
             last = r.split()[-1]
             index.setdefault(last, []).append(r)
         return index
@@ -281,46 +492,36 @@ if __name__ == "__main__":
 
     events = get_events()
     no_of_events = len(events)
-    print(f"Found {no_of_events} Events.")
+    scope = ", ".join(m.isoformat() for m in weekend_scope_mondays())
+    print(f"Found {no_of_events} Events (weekend weeks starting {scope}).")
+    print(
+        f"Parallelism: {EVENT_WORKERS} event workers, "
+        f"{FETCH_WORKERS} list workers, max {MAX_IN_FLIGHT} in flight."
+    )
     result_dict = {
         "gefundene_pferde": {},
         "gefundene_reiter": {}
     }
-    for i, event in enumerate(events):
-        try:
-            starterliste = get_starterliste(event["link"])
-        except Exception as exc:
-            print(f"Skip {event.get('location')}: {exc}")
-            continue
-        for gefundener_reiter in starterliste["gefundene_reiter"]:
-            norm = normalize_name(gefundener_reiter)
-            last = norm.split()[-1]
 
+    done = 0
+    with ThreadPoolExecutor(max_workers=EVENT_WORKERS) as pool:
+        futures = [
+            pool.submit(process_event, event, rider_index, list_of_horses)
+            for event in events
+        ]
+        for fut in as_completed(futures):
+            event, hits, exc = fut.result()
+            done += 1
+            if exc is not None:
+                print(f"Skip {event.get('location')}: {exc}")
+            elif hits is not None:
+                riders_hits, horses_hits = hits
+                for name, labels in riders_hits.items():
+                    result_dict["gefundene_reiter"].setdefault(name, []).extend(labels)
+                for name, labels in horses_hits.items():
+                    result_dict["gefundene_pferde"].setdefault(name, []).extend(labels)
+            print(f"Progress: {'{:.1%}'.format(done / no_of_events)}")
 
-            if last not in rider_index:
-                continue
-
-            for rider in rider_index[last]:
-                if rider_matches(gefundener_reiter, rider):
-                    if rider.title() not in result_dict["gefundene_reiter"]:
-                        result_dict["gefundene_reiter"][rider.title()] = []
-
-                    event_label = f"{event['location']} {event['date']} ({event['link']})"
-                    result_dict["gefundene_reiter"][rider.title()].append(event_label)
-                    break
-            
-
-        for horse_name in starterliste["gefundene_pferde"]:
-            if not list_of_horses:
-                break
-            for pferd in list_of_horses:
-                if normalize_horse(horse_name) == normalize_horse(pferd):
-                    if not horse_name in result_dict["gefundene_pferde"]:
-                        result_dict["gefundene_pferde"][horse_name] = []
-                    result_dict["gefundene_pferde"][horse_name].append(event["location"]+" ("+event["date"]+") Link: "+event["link"])
-                    break
-
-        print(f"Progress: {'{:.1%}'.format((i+1)/no_of_events)}")
     print("DONE")
 
     with open('result.json', 'w', encoding='utf-8') as f:
