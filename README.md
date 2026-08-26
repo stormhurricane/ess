@@ -88,8 +88,8 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 - [x] 2. `events.py` — Payload-Parse, Wochenend-Scope, `get_events`
 - [x] 3. `starters.py` — `/riders/` + Startlisten-Fallback
 - [x] 4. `match.py` — `normalize_*`, `rider_matches`
-- [ ] 5. `main.py` — nur Config laden, Events orchestrieren, Ergebnis schreiben
-- [ ] 6. leeres `src/` löschen
+- [x] 5. `main.py` — nur Config laden, Events orchestrieren, Ergebnis schreiben
+- [x] 6. leeres `src/` löschen
 
 ### Tests
 
