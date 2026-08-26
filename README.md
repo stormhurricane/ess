@@ -68,20 +68,35 @@ nations:
 
 ## TODOs
 
-### Config und Repo
+### Erledigt (Stand)
 
-- [x] `config.yaml` gitignoren, `config.example.yaml` mit Platzhaltern committen
+- [x] `config.yaml` gitignoren, `config.example.yaml` mit Platzhaltern
+- [x] Eventliste aus Next.js-Payload statt DOM-Karten
+- [x] Fallback: leere `/riders/` → Klassen-`startlist`/`resultlist`
+- [x] Scope: letztes + nächstes Wochenende (Kalenderwochen)
+- [x] Parallelität, kürzerer Delay, Keep-Alive-Session pro Thread
+- [x] Leere `/riders/`-Seiten nur 15 min cachen
+- [x] Request-Timeouts; einzelne Events/Listen bei Fehlern überspringen
+- [x] UTF-8 für Cache und `result.json`
+- [x] `event_cache_testing.json` entfernt
+
+### Struktur / Refactoring
+
+- [ ] `main.py` in Module splitten (`fetch`, `events`, `starters`, `match`)
+- [ ] Einstiegspunkt klar halten (`python main.py` oder `python -m …`)
+- [ ] leeres `src/` entfernen oder gezielt als Package nutzen (Entscheidung: flach neben `main.py`, kein `src/` nötig)
+
+### Config
+
 - [ ] `countries` nutzen oder entfernen; Nationen aus der Config lesen (`GER` statt Hardcode)
-- [ ] optionale Keys: Cache-TTL, Output-Pfad, Request-Delay
+- [ ] optionale Keys: Cache-TTL, Output-Pfad, Request-Delay, Workers
 - [ ] Reiter/Pferde aktivierbar machen, statt auskommentierter Listen
 
 ### Robustheit
 
-- [ ] Request-Timeouts und Weiterlaufen, wenn ein Event fehlschlägt
-- [ ] Encoding überall auf UTF-8
 - [ ] `verify=False` entfernen oder dokumentieren, warum TLS deaktiviert ist
 - [ ] Cache aufräumen (aktuell wächst `.cache/` unbegrenzt)
-- [ ] Parser-Null-Checks (`evt_locator`, fehlende Links)
+- [ ] Parser-Null-Checks wo noch nötig (Fallback-DOM-Pfad)
 
 ### Matching
 
@@ -99,7 +114,4 @@ nations:
 
 ### Aufräumen
 
-- [ ] README (dieses File) pflegen
 - [ ] `requirements.txt` mit `==` pinnen, `beautifulsoup4` statt `bs4`
-- [ ] leeres `src/` und `event_cache_testing.json` entfernen
-- [ ] `main.py` in Module splitten (`fetch`, `parse`, `match`), wenn die Datei wächst
