@@ -82,9 +82,21 @@ nations:
 
 ### Struktur / Refactoring
 
-- [ ] `main.py` in Module splitten (`fetch`, `events`, `starters`, `match`)
-- [ ] Einstiegspunkt klar halten (`python main.py` oder `python -m …`)
-- [ ] leeres `src/` entfernen oder gezielt als Package nutzen (Entscheidung: flach neben `main.py`, kein `src/` nötig)
+Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
+
+- [ ] 1. `fetch.py` — HTTP, Cache, Session, Delay/Semaphore aus `main.py` ziehen
+- [ ] 2. `events.py` — Payload-Parse, Wochenend-Scope, `get_events`
+- [ ] 3. `starters.py` — `/riders/` + Startlisten-Fallback
+- [ ] 4. `match.py` — `normalize_*`, `rider_matches`
+- [ ] 5. `main.py` — nur Config laden, Events orchestrieren, Ergebnis schreiben
+- [ ] 6. leeres `src/` löschen
+
+### Tests
+
+- [ ] Testdatei(en) für Matching (`normalize_name`, `rider_matches`, `normalize_horse`)
+- [ ] Tests für Wochenend-Scope (`weekend_scope_mondays`)
+- [ ] Optional: kleine HTML-Fixtures für Payload- und Startlisten-Parser
+
 
 ### Config
 
@@ -103,7 +115,6 @@ nations:
 - [ ] Pferdenamen nicht pauschal um die Startnummer kürzen (`Diamond 110` → `diamond`)
 - [ ] Initiale-Match optional (sonst trifft `L. Scharrer` auch Laura Scharrer)
 - [ ] Config-Namen als Anzeige behalten, nicht `str.title()`
-- [ ] Tests für `normalize_name`, `rider_matches`, `normalize_horse`
 
 ### Ausgabe und CLI
 
