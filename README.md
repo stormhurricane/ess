@@ -84,7 +84,7 @@ nations:
 
 Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 
-- [ ] 1. `fetch.py` — HTTP, Cache, Session, Delay/Semaphore aus `main.py` ziehen
+- [x] 1. `fetch.py` — HTTP, Cache, Session, Delay/Semaphore aus `main.py` ziehen
 - [ ] 2. `events.py` — Payload-Parse, Wochenend-Scope, `get_events`
 - [ ] 3. `starters.py` — `/riders/` + Startlisten-Fallback
 - [ ] 4. `match.py` — `normalize_*`, `rider_matches`
