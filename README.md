@@ -93,7 +93,7 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 
 ### Tests
 
-- [ ] Testdatei(en) für Matching (`normalize_name`, `rider_matches`, `normalize_horse`)
+- [x] Testdatei(en) für Matching (`normalize_name`, `rider_matches`, `normalize_horse`)
 - [ ] Tests für Wochenend-Scope (`weekend_scope_mondays`)
 - [ ] Optional: kleine HTML-Fixtures für Payload- und Startlisten-Parser
 
