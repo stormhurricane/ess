@@ -97,7 +97,7 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 
 - [x] Testdatei(en) für Matching (`normalize_name`, `rider_matches`, `normalize_horse`)
 - [x] Tests für Wochenend-Scope (`weekend_scope_mondays`)
-- [ ] Optional: kleine HTML-Fixtures für Payload- und Startlisten-Parser
+- [x] Optional: kleine HTML-Fixtures für Payload- und Startlisten-Parser
 
 
 ### Config
