@@ -1,5 +1,7 @@
 # ESS — Equi-Score Scraper
 
+**v1.0** — lokales CLI. GUI/Cloud-Ideen: Roadmap am Ende.
+
 Sucht auf [equi-score.de](https://www.equi-score.de/) deutsche Turniere und prüft,
 ob konfigurierte Reiter oder Pferde in den Starterlisten stehen.
 
@@ -126,3 +128,23 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 ### Aufräumen
 
 - [ ] `requirements.txt` mit `==` pinnen, `beautifulsoup4` statt `bs4`
+
+## Roadmap — GUI / Cloud (nach v1.0)
+
+CLI (`python main.py` + lokale `config.yaml`) bleibt. Web und Actions kommen **dazu**, nicht als Ersatz.
+
+### Zielbild
+
+- [ ] Privates Repo: Config/Result nicht öffentlich; CLI und Cloud parallel
+- [ ] Strukturierte `result.json` (Objekte mit Ort/Datum/URL), keine Display-Strings
+- [ ] Vercel-Frontend (React o.ä.) hinter Basic Auth („htpasswd“-Feeling)
+- [ ] Config im privaten Repo speichern; Vercel-API liest/schreibt per GitHub-Token (nur serverseitig)
+- [ ] GitHub Actions: fester Cron + `workflow_dispatch` („Jetzt scrapen“)
+- [ ] Frontend: letzte Config anzeigen/bearbeiten, Treffer anzeigen, optional Run triggern
+- [ ] Später optional: Persistenz von Repo-Datei → DB (z.B. Supabase), API-Verträge stabil halten
+
+### Bewusst später / nicht v1
+
+- [ ] Öffentlicher Voll-Index aller Starterlisten (Frontend sucht ohne Crawl-Config)
+- [ ] Cron-Ausdruck selbst aus der UI ändern (Zeitplan bleibt in der Workflow-YAML)
+- [ ] Roh-`.cache/`-HTML dem Frontend zum Durchsuchen geben
