@@ -72,6 +72,8 @@ def flag_nation_code(title: str) -> str | None:
 
 def parse_events_from_dom(html: str, nations=None) -> list[dict]:
     """Fallback: nur die im HTML gerenderten Zeilen (erste zwei Wochen)."""
+    if not html:
+        return []
     allowed = set(normalize_nations(nations))
     soup = BeautifulSoup(html, "html.parser")
     events = []
@@ -84,8 +86,11 @@ def parse_events_from_dom(html: str, nations=None) -> list[dict]:
         if meta:
             text = meta.get_text(" ", strip=True)
             if "·" in text:
-                place, date_label = [p.strip() for p in text.split("·", 1)]
-            else:
+                parts = [p.strip() for p in text.split("·", 1)]
+                place = parts[0]
+                if len(parts) > 1 and parts[1]:
+                    date_label = parts[1]
+            elif text:
                 place = text
         flag = a.select_one(".flag[title], .event-list-flag[title]")
         title = flag.get("title", "") if flag else ""
@@ -103,6 +108,37 @@ def parse_events_from_dom(html: str, nations=None) -> list[dict]:
             "nation": code,
             "date": date_label,
             "location": place,
+        })
+    return events
+
+
+def parse_events_from_evt_box(html: str, nations=None) -> list[dict]:
+    """Fallback: alte Startseite mit a.evt_box."""
+    if not html:
+        return []
+    allowed_set = set(normalize_nations(nations))
+    soup = BeautifulSoup(html, "html.parser")
+    events = []
+    for a in soup.select("a.evt_box"):
+        inner = a.find("div")
+        if not inner:
+            continue
+        nation = (inner.get("data-nation") or "").strip().upper()
+        if not nation or nation not in allowed_set:
+            continue
+
+        date_el = inner.find("div", class_="evt_date")
+        date_label = date_el.get_text(strip=True) if date_el else "Jetzt"
+        locator = inner.find("div", class_="evt_locator")
+        location = locator.get_text(strip=True) if locator else ""
+        href = a.get("href")
+        if not href or "/event/" not in href:
+            continue
+        events.append({
+            "link": prefer_german_url(href),
+            "nation": nation,
+            "date": date_label,
+            "location": location,
         })
     return events
 
@@ -186,31 +222,7 @@ def get_events(nations=None):
             if event_is_relevant(e, nations=allowed)
         ]
 
-    # Alte Startseite (a.evt_box) oder sichtbare Zeilen der neuen Seite
-    allowed_set = set(allowed)
-    soup = BeautifulSoup(html, "html.parser")
-    events = []
-    for a in soup.select("a.evt_box"):
-        inner = a.find("div")
-        if not inner:
-            continue
-        nation = (inner.get("data-nation") or "").strip().upper()
-        if nation not in allowed_set:
-            continue
-
-        date_el = inner.find("div", class_="evt_date")
-        date_label = date_el.get_text(strip=True) if date_el else "Jetzt"
-        locator = inner.find("div", class_="evt_locator")
-        location = locator.get_text(strip=True) if locator else ""
-        href = a.get("href")
-        if not href:
-            continue
-        events.append({
-            "link": prefer_german_url(href),
-            "nation": nation,
-            "date": date_label,
-            "location": location,
-        })
+    events = parse_events_from_evt_box(html, nations=allowed)
     if events:
         return events
 

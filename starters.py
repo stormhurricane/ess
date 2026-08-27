@@ -21,6 +21,9 @@ def _add_unique(items: list[str], value: str) -> None:
 
 def parse_riders_overview(html: str) -> dict:
     """Parse /riders/ overview: 'NACHNAME, Vorname' + horses in .box_horse."""
+    empty = {"gefundene_pferde": [], "gefundene_reiter": []}
+    if not html:
+        return empty
     soup = BeautifulSoup(html, "html.parser")
     found_riders = []
     found_horses = []
@@ -28,10 +31,13 @@ def parse_riders_overview(html: str) -> dict:
         rider_name = "".join(
             t.strip() for t in rider_div.find_all(string=True, recursive=False)
         ).strip()
+        if not rider_name:
+            continue
         _add_unique(found_riders, rider_name)
 
         for horse_el in rider_div.select(".box_horse b"):
-            _add_unique(found_horses, horse_el.get_text(strip=True))
+            horse_name = horse_el.get_text(strip=True) if horse_el else ""
+            _add_unique(found_horses, horse_name)
 
     return {
         "gefundene_pferde": found_horses,
@@ -41,6 +47,9 @@ def parse_riders_overview(html: str) -> dict:
 
 def parse_competition_list(html: str) -> dict:
     """Parse startlist/resultlist pages: rider in <b>, horse in span.rider_name."""
+    empty = {"gefundene_pferde": [], "gefundene_reiter": []}
+    if not html:
+        return empty
     soup = BeautifulSoup(html, "html.parser")
     found_riders = []
     found_horses = []
@@ -51,13 +60,14 @@ def parse_competition_list(html: str) -> dict:
             continue
         # Club/org line sits under the name; skip cells that are only numbers etc.
         name = bold.get_text(" ", strip=True)
-        if " " not in name:
+        if not name or " " not in name:
             continue
         _add_unique(found_riders, name)
 
     for horse_span in soup.select("span.rider_name"):
         horse_name = horse_span.get_text(" ", strip=True)
-        _add_unique(found_horses, horse_name)
+        if horse_name:
+            _add_unique(found_horses, horse_name)
 
     return {
         "gefundene_pferde": found_horses,
@@ -67,14 +77,18 @@ def parse_competition_list(html: str) -> dict:
 
 def competition_list_urls(event_url: str, event_html: str) -> list[str]:
     """Collect per-class list URLs; prefer startlist over resultlist for same class."""
+    if not event_html or not event_url:
+        return []
     soup = BeautifulSoup(event_html, "html.parser")
     by_class: dict[str, dict[str, str]] = {}
 
     for a in soup.select('a[href*="/startlist/"], a[href*="/resultlist/"]'):
         href = a.get("href") or ""
+        if "/startlist/" not in href and "/resultlist/" not in href:
+            continue
         kind = "startlist" if "/startlist/" in href else "resultlist"
         class_id = href.rstrip("/").split("/")[-1]
-        if not class_id:
+        if not class_id or not class_id.isdigit():
             continue
         by_class.setdefault(class_id, {})[kind] = absolute_url(event_url, href)
 
@@ -90,6 +104,8 @@ def merge_starterlisten(*parts: dict) -> dict:
     riders = []
     horses = []
     for part in parts:
+        if not part:
+            continue
         for rider in part.get("gefundene_reiter", []):
             _add_unique(riders, rider)
         for horse in part.get("gefundene_pferde", []):

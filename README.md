@@ -147,7 +147,7 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 
 - [x] `verify=False` dokumentiert (unvollständige Kette auf `results.equi-score.com`)
 - [x] Cache aufräumen: `.cache/`-Dateien älter als `cache_max_age_days` (Default 14)
-- [ ] Parser-Null-Checks wo noch nötig (Fallback-DOM-Pfad)
+- [x] Parser-Null-Checks im DOM-Fallback (fehlende Elemente → skip, kein Crash)
 
 ### Matching
 
