@@ -48,6 +48,12 @@ Requests laufen parallel (Events + Startlisten), begrenzt auf max. 8 gleichzeiti
 Verbindungen, mit kurzer Pause (0,2–0,5 s) pro Netz-Request. Pro Worker-Thread
 wird eine `requests.Session` mit Keep-Alive wiederverwendet.
 
+**TLS:** Der Scraper setzt `verify=False`, weil `results.equi-score.com` (Events,
+`/riders/`, Startlisten) eine **unvollständige Zertifikatskette** liefert —
+Python bricht dann mit `CERTIFICATE_VERIFY_FAILED` ab. `www.equi-score.de`
+verifyiert normal; der Fehler betrifft nur den Results-Host. Bis equi-score das
+behebt, bleibt die Prüfung deaktiviert (nur öffentliche Starterlisten, kein Login).
+
 ## Konfiguration
 
 Vorlage: `config.example.yaml`
@@ -135,7 +141,7 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 
 ### Robustheit
 
-- [ ] `verify=False` entfernen oder dokumentieren, warum TLS deaktiviert ist
+- [x] `verify=False` dokumentiert (unvollständige Kette auf `results.equi-score.com`)
 - [ ] Cache aufräumen (aktuell wächst `.cache/` unbegrenzt)
 - [ ] Parser-Null-Checks wo noch nötig (Fallback-DOM-Pfad)
 

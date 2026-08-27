@@ -59,6 +59,7 @@ def get_http_session() -> requests.Session:
     if session is None:
         session = requests.Session()
         session.headers.update(HEADERS)
+        # results.equi-score.com sends an incomplete cert chain; strict verify fails.
         session.verify = False
         _thread_local.session = session
     return session
