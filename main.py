@@ -3,6 +3,7 @@ import json
 import yaml
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from config_entries import active_names
 from events import get_events, weekend_scope_mondays
 from fetch import MAX_IN_FLIGHT
 from match import (
@@ -53,14 +54,17 @@ def main() -> None:
 
     config = load_config()
     nations = config.get("nations")
-    list_of_horses = [normalize_horse(x) for x in config["horses"]]
-    list_of_riders = [normalize_name(x) for x in config["riders"]]
+    list_of_horses = [normalize_horse(x) for x in active_names(config.get("horses"))]
+    list_of_riders = [normalize_name(x) for x in active_names(config.get("riders"))]
     rider_index = build_rider_index(list_of_riders)
 
     event_workers = settings["event_workers"]
     events = get_events(nations=nations)
     no_of_events = len(events)
     scope = ", ".join(m.isoformat() for m in weekend_scope_mondays())
+    print(
+        f"Searching {len(list_of_riders)} riders, {len(list_of_horses)} horses."
+    )
     print(f"Found {no_of_events} Events (weekend weeks starting {scope}).")
     print(
         f"Parallelism: {event_workers} event workers, "

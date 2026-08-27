@@ -1,10 +1,15 @@
 riders:
-  # Liste der Reiter, die gesucht werden sollen.
-  - Max Mustermann
+  # name + active: Toggle später im GUI; active: false = nicht suchen, Eintrag behalten
+  - name: Max Mustermann
+    active: true
+  - name: Erika Musterfrau
+    active: false
 
 horses:
-  # Liste der Pferde, die gesucht werden sollen
-  - Epona
+  - name: Epona
+    active: true
+  - name: Phantom
+    active: false
 
 nations:
   # Equi-score-Ländercodes (wie im Event-Payload), z.B. GER

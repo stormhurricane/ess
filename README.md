@@ -54,10 +54,14 @@ Vorlage: `config.example.yaml`
 
 ```yaml
 riders:
-  - Max Mustermann
+  - name: Max Mustermann
+    active: true
+  - name: Erika Musterfrau
+    active: false
 
 horses:
-  - Epona
+  - name: Epona
+    active: true
 
 nations:
   - GER
@@ -67,7 +71,9 @@ nations:
 - **Pferde:** Vergleich ohne Groß/Kleinschreibung; eine Nummer am Ende (`Chili 57`)
   wird aktuell abgeschnitten — kurze Namen können zu Falschtreffern führen.
 - **Nationen:** Equi-score-Codes (`GER`). Fehlt der Key oder ist die Liste leer, gilt `GER`.
-
+- **Aktiv:** Einträge als `{name, active}`. Nur `active: true` wird gesucht
+  (`active` fehlt → aktiv). Reine Strings (`- Max Mustermann`) gehen weiter.
+  Später GUI: Toggle = `active`, Löschen = Eintrag entfernen.
 ### Technische Settings (`settings.json`)
 
 Getrennt von der Such-Config. Vorlage: `settings.example.json`.
@@ -125,7 +131,7 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 
 - [x] `countries` → `nations` mit Codes (`GER`); aus Config lesen, Default `GER`
 - [x] optionale technische Settings in `settings.json` (Cache, Workers, Delay, Output; Min/Max)
-- [ ] Reiter/Pferde aktivierbar machen, statt auskommentierter Listen
+- [x] Reiter/Pferde mit `active` (Toggle/Löschen-ready; Strings weiter erlaubt)
 
 ### Robustheit
 
@@ -161,7 +167,7 @@ CLI (`python main.py` + lokale `config.yaml`) bleibt. Web und Actions kommen **d
 - [ ] Vercel-Frontend (React o.ä.) hinter Basic Auth („htpasswd“-Feeling)
 - [ ] Config im privaten Repo speichern; Vercel-API liest/schreibt per GitHub-Token (nur serverseitig)
 - [ ] GitHub Actions: fester Cron + `workflow_dispatch` („Jetzt scrapen“)
-- [ ] Frontend: letzte Config anzeigen/bearbeiten, Treffer anzeigen, optional Run triggern
+- [ ] Frontend: letzte Config anzeigen/bearbeiten (Toggle `active`, Löschen), Treffer, optional Run
 - [ ] Frontend: optionaler Settings-Hebel (`settings.json`, hinter Auth; Cloud-Limits beachten)
 - [ ] Später optional: Persistenz von Repo-Datei → DB (z.B. Supabase), API-Verträge stabil halten
 
