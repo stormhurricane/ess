@@ -209,3 +209,4 @@ __marimo__/
 # Local ESS config and output (use config.example.yaml as template)
 config.yaml
 result.json
+settings.json

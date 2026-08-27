@@ -14,10 +14,15 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp config.example.yaml config.yaml
+cp settings.example.json settings.json   # optional
 ```
 
 In `config.yaml` die zu suchenden Reiter und Pferde eintragen. Diese Datei ist
 gitignored und gehört nicht ins Repo.
+
+Technische Knöpfe (Cache, Parallelität, Delay) liegen optional in `settings.json`
+(Vorlage: `cp settings.example.json settings.json`). Fehlt die Datei, gelten die
+Defaults aus dem Code (Werte werden auf Min/Max begrenzt).
 
 ## Nutzung
 
@@ -63,6 +68,21 @@ nations:
   wird aktuell abgeschnitten — kurze Namen können zu Falschtreffern führen.
 - **Nationen:** Equi-score-Codes (`GER`). Fehlt der Key oder ist die Liste leer, gilt `GER`.
 
+### Technische Settings (`settings.json`)
+
+Getrennt von der Such-Config. Vorlage: `settings.example.json`.
+
+| Key | Default | Min | Max |
+|-----|---------|-----|-----|
+| `cache_hours` | 6 | 0 | 168 |
+| `empty_riders_cache_hours` | 0.25 | 0 | 24 |
+| `request_delay_min` / `request_delay_max` | 0.2 / 0.5 | 0 | 10 |
+| `request_timeout` | 30 | 5 | 120 |
+| `max_in_flight` | 8 | 1 | 16 |
+| `event_workers` | 4 | 1 | 8 |
+| `fetch_workers` | 6 | 1 | 12 |
+| `output` | `result.json` | — | — |
+
 ## Ausgabe
 
 `result.json` gruppiert Treffer nach Reiter und Pferd, jeweils mit Ort, Datum und Link.
@@ -104,7 +124,7 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 ### Config
 
 - [x] `countries` → `nations` mit Codes (`GER`); aus Config lesen, Default `GER`
-- [ ] optionale Keys: Cache-TTL, Output-Pfad, Request-Delay, Workers
+- [x] optionale technische Settings in `settings.json` (Cache, Workers, Delay, Output; Min/Max)
 - [ ] Reiter/Pferde aktivierbar machen, statt auskommentierter Listen
 
 ### Robustheit
@@ -142,6 +162,7 @@ CLI (`python main.py` + lokale `config.yaml`) bleibt. Web und Actions kommen **d
 - [ ] Config im privaten Repo speichern; Vercel-API liest/schreibt per GitHub-Token (nur serverseitig)
 - [ ] GitHub Actions: fester Cron + `workflow_dispatch` („Jetzt scrapen“)
 - [ ] Frontend: letzte Config anzeigen/bearbeiten, Treffer anzeigen, optional Run triggern
+- [ ] Frontend: optionaler Settings-Hebel (`settings.json`, hinter Auth; Cloud-Limits beachten)
 - [ ] Später optional: Persistenz von Repo-Datei → DB (z.B. Supabase), API-Verträge stabil halten
 
 ### Bewusst später / nicht v1

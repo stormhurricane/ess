@@ -1,0 +1,11 @@
+{
+  "cache_hours": 6,
+  "empty_riders_cache_hours": 0.25,
+  "request_delay_min": 0.2,
+  "request_delay_max": 0.5,
+  "request_timeout": 30,
+  "max_in_flight": 8,
+  "event_workers": 4,
+  "fetch_workers": 6,
+  "output": "result.json"
+}

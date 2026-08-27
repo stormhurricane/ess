@@ -11,12 +11,10 @@ from match import (
     normalize_horse,
     normalize_name,
 )
+from settings import apply_settings, load_settings
 from starters import FETCH_WORKERS, get_starterliste
 
-# Concurrent event workers (list-page parallelism lives in starters.FETCH_WORKERS)
-EVENT_WORKERS = 4
 CONFIG_PATH = "config.yaml"
-RESULT_PATH = "result.json"
 
 
 def process_event(event, rider_index, list_of_horses):
@@ -44,30 +42,34 @@ def merge_hits(result_dict: dict, riders_hits: dict, horses_hits: dict) -> None:
         result_dict["gefundene_pferde"].setdefault(name, []).extend(labels)
 
 
-def write_result(result_dict: dict, path: str = RESULT_PATH) -> None:
+def write_result(result_dict: dict, path: str) -> None:
     with open(path, "w", encoding="utf-8") as f:
         json.dump(result_dict, f, ensure_ascii=False, indent=4)
 
 
 def main() -> None:
+    settings = load_settings()
+    apply_settings(settings)
+
     config = load_config()
     nations = config.get("nations")
     list_of_horses = [normalize_horse(x) for x in config["horses"]]
     list_of_riders = [normalize_name(x) for x in config["riders"]]
     rider_index = build_rider_index(list_of_riders)
 
+    event_workers = settings["event_workers"]
     events = get_events(nations=nations)
     no_of_events = len(events)
     scope = ", ".join(m.isoformat() for m in weekend_scope_mondays())
     print(f"Found {no_of_events} Events (weekend weeks starting {scope}).")
     print(
-        f"Parallelism: {EVENT_WORKERS} event workers, "
+        f"Parallelism: {event_workers} event workers, "
         f"{FETCH_WORKERS} list workers, max {MAX_IN_FLIGHT} in flight."
     )
 
     result_dict = empty_result()
     done = 0
-    with ThreadPoolExecutor(max_workers=EVENT_WORKERS) as pool:
+    with ThreadPoolExecutor(max_workers=event_workers) as pool:
         futures = [
             pool.submit(process_event, event, rider_index, list_of_horses)
             for event in events
@@ -83,7 +85,7 @@ def main() -> None:
             print(f"Progress: {'{:.1%}'.format(done / no_of_events)}")
 
     print("DONE")
-    write_result(result_dict)
+    write_result(result_dict, settings["output"])
 
 
 if __name__ == "__main__":

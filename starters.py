@@ -8,6 +8,12 @@ from fetch import absolute_url, fetch, prefer_german_url, riders_url
 FETCH_WORKERS = 6
 
 
+def apply_settings(*, fetch_workers: int | None = None) -> None:
+    global FETCH_WORKERS
+    if fetch_workers is not None:
+        FETCH_WORKERS = fetch_workers
+
+
 def _add_unique(items: list[str], value: str) -> None:
     if value and value not in items:
         items.append(value)
