@@ -61,6 +61,7 @@ nations:
 - **Reiter:** Nachname muss passen; Vorname exakt oder als Initiale (`L. Mustermann`).
 - **Pferde:** Vergleich ohne Groß/Kleinschreibung; eine Nummer am Ende (`Chili 57`)
   wird aktuell abgeschnitten — kurze Namen können zu Falschtreffern führen.
+- **Nationen:** Equi-score-Codes (`GER`). Fehlt der Key oder ist die Liste leer, gilt `GER`.
 
 ## Ausgabe
 
@@ -102,7 +103,7 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 
 ### Config
 
-- [ ] `countries` nutzen oder entfernen; Nationen aus der Config lesen (`GER` statt Hardcode)
+- [x] `countries` → `nations` mit Codes (`GER`); aus Config lesen, Default `GER`
 - [ ] optionale Keys: Cache-TTL, Output-Pfad, Request-Delay, Workers
 - [ ] Reiter/Pferde aktivierbar machen, statt auskommentierter Listen
 

@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from fetch import fetch, prefer_german_url
 
 BASE_URL = "https://www.equi-score.de/"
-NATION = "GER"
+DEFAULT_NATIONS = ["GER"]
 # Last fully past weekend + this many upcoming weekends (by calendar week)
 PAST_WEEKENDS = 1
 FUTURE_WEEKENDS = 1
@@ -15,6 +15,18 @@ FUTURE_WEEKENDS = 1
 NEXT_F_PUSH = re.compile(
     r'self\.__next_f\.push\(\[1,"((?:\\.|[^"\\])*)"\]\)'
 )
+
+
+def normalize_nations(nations) -> list[str]:
+    """Equi-score country codes, e.g. GER. Default when missing/empty: GER."""
+    if not nations:
+        return list(DEFAULT_NATIONS)
+    out = []
+    for item in nations:
+        code = str(item).strip().upper()
+        if code and code not in out:
+            out.append(code)
+    return out or list(DEFAULT_NATIONS)
 
 
 def next_f_strings(html: str) -> list[str]:
@@ -48,8 +60,19 @@ def parse_embedded_events(html: str) -> list[dict]:
     return []
 
 
-def parse_events_from_dom(html: str) -> list[dict]:
+def flag_nation_code(title: str) -> str | None:
+    """Map DOM flag title to equi-score code; None = unknown / non-GER."""
+    t = (title or "").lower()
+    if not t:
+        return None
+    if "deutsch" in t or "germany" in t:
+        return "GER"
+    return None
+
+
+def parse_events_from_dom(html: str, nations=None) -> list[dict]:
     """Fallback: nur die im HTML gerenderten Zeilen (erste zwei Wochen)."""
+    allowed = set(normalize_nations(nations))
     soup = BeautifulSoup(html, "html.parser")
     events = []
     for a in soup.select("a.event-row"):
@@ -65,14 +88,19 @@ def parse_events_from_dom(html: str) -> list[dict]:
             else:
                 place = text
         flag = a.select_one(".flag[title], .event-list-flag[title]")
-        nation = NATION
-        if flag and flag.get("title"):
-            title = flag.get("title", "").lower()
-            if title and "deutsch" not in title and "germany" not in title:
+        title = flag.get("title", "") if flag else ""
+        if title:
+            code = flag_nation_code(title)
+            if code is None or code not in allowed:
+                continue
+        else:
+            # No flag: assume GER listing (site default)
+            code = "GER"
+            if code not in allowed:
                 continue
         events.append({
             "link": prefer_german_url(href),
-            "nation": nation,
+            "nation": code,
             "date": date_label,
             "location": place,
         })
@@ -120,8 +148,9 @@ def weekend_scope_mondays(
     return unique
 
 
-def event_is_relevant(event: dict, nation: str = NATION) -> bool:
-    if event.get("country") != nation:
+def event_is_relevant(event: dict, nations=None) -> bool:
+    allowed = set(normalize_nations(nations))
+    if event.get("country") not in allowed:
         return False
     href = event.get("href") or ""
     if "/event/" not in href:
@@ -145,23 +174,28 @@ def to_event_record(event: dict) -> dict:
     }
 
 
-def get_events():
+def get_events(nations=None):
+    allowed = normalize_nations(nations)
     html = fetch(BASE_URL)
 
     embedded = parse_embedded_events(html)
     if embedded:
-        return [to_event_record(e) for e in embedded if event_is_relevant(e)]
+        return [
+            to_event_record(e)
+            for e in embedded
+            if event_is_relevant(e, nations=allowed)
+        ]
 
     # Alte Startseite (a.evt_box) oder sichtbare Zeilen der neuen Seite
+    allowed_set = set(allowed)
     soup = BeautifulSoup(html, "html.parser")
     events = []
     for a in soup.select("a.evt_box"):
         inner = a.find("div")
         if not inner:
             continue
-        nation = inner.get("data-nation")
-        #FIXME bessere config nutzung
-        if nation != NATION:
+        nation = (inner.get("data-nation") or "").strip().upper()
+        if nation not in allowed_set:
             continue
 
         date_el = inner.find("div", class_="evt_date")
@@ -180,4 +214,4 @@ def get_events():
     if events:
         return events
 
-    return parse_events_from_dom(html)
+    return parse_events_from_dom(html, nations=allowed)

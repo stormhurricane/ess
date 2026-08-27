@@ -41,6 +41,13 @@ class DomEventParserTests(unittest.TestCase):
         locations = [e["location"] for e in events]
         self.assertNotIn("Paris", locations)
 
+    def test_respects_nations_filter(self):
+        events = parse_events_from_dom(
+            load_fixture("event_rows_dom.html"),
+            nations=["NED"],
+        )
+        self.assertEqual(events, [])
+
 
 class RidersOverviewParserTests(unittest.TestCase):
     def test_parses_comma_names_and_horses(self):

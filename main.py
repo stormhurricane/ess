@@ -51,11 +51,12 @@ def write_result(result_dict: dict, path: str = RESULT_PATH) -> None:
 
 def main() -> None:
     config = load_config()
+    nations = config.get("nations")
     list_of_horses = [normalize_horse(x) for x in config["horses"]]
     list_of_riders = [normalize_name(x) for x in config["riders"]]
     rider_index = build_rider_index(list_of_riders)
 
-    events = get_events()
+    events = get_events(nations=nations)
     no_of_events = len(events)
     scope = ", ".join(m.isoformat() for m in weekend_scope_mondays())
     print(f"Found {no_of_events} Events (weekend weeks starting {scope}).")

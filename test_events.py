@@ -1,7 +1,12 @@
 import unittest
-from datetime import date
+from datetime import date, datetime, timezone
 
-from events import monday_of, weekend_scope_mondays
+from events import (
+    event_is_relevant,
+    monday_of,
+    normalize_nations,
+    weekend_scope_mondays,
+)
 
 
 class MondayOfTests(unittest.TestCase):
@@ -61,6 +66,28 @@ class WeekendScopeMondaysTests(unittest.TestCase):
         got = weekend_scope_mondays(today=date(2026, 8, 26))
         self.assertEqual(got, list(dict.fromkeys(got)))
         self.assertTrue(all(d.weekday() == 0 for d in got))
+
+
+class NormalizeNationsTests(unittest.TestCase):
+    def test_default_when_missing(self):
+        self.assertEqual(normalize_nations(None), ["GER"])
+        self.assertEqual(normalize_nations([]), ["GER"])
+
+    def test_uppercases_and_dedupes(self):
+        self.assertEqual(normalize_nations(["ger", "GER", " ned "]), ["GER", "NED"])
+
+
+class EventIsRelevantTests(unittest.TestCase):
+    def test_filters_by_nation_list(self):
+        week = weekend_scope_mondays(today=date(2026, 8, 26))[0]
+        ts = int(datetime(week.year, week.month, week.day, tzinfo=timezone.utc).timestamp())
+        event = {
+            "country": "GER",
+            "href": "/event/2099/1/de",
+            "weekStart": ts,
+        }
+        self.assertTrue(event_is_relevant(event, nations=["GER"]))
+        self.assertFalse(event_is_relevant(event, nations=["NED"]))
 
 
 if __name__ == "__main__":
