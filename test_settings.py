@@ -35,6 +35,15 @@ class NormalizeSettingsTests(unittest.TestCase):
         got = normalize_settings({"output": "  out/hits.json  "})
         self.assertEqual(got["output"], "out/hits.json")
 
+    def test_cache_max_age_days_default_and_clamp(self):
+        got = normalize_settings(None)
+        self.assertEqual(got["cache_max_age_days"], DEFAULTS["cache_max_age_days"])
+        self.assertEqual(normalize_settings({"cache_max_age_days": 0})["cache_max_age_days"], 0)
+        self.assertEqual(
+            normalize_settings({"cache_max_age_days": 999})["cache_max_age_days"],
+            MAX["cache_max_age_days"],
+        )
+
 
 class LoadSettingsTests(unittest.TestCase):
     def test_missing_file_uses_defaults(self):

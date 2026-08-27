@@ -94,6 +94,10 @@ Getrennt von der Such-Config. Vorlage: `settings.example.json`.
 | `event_workers` | 4 | 1 | 8 |
 | `fetch_workers` | 6 | 1 | 12 |
 | `output` | `result.json` | — | — |
+| `cache_max_age_days` | 14 | 0 (aus) | 90 |
+
+`cache_max_age_days`: Beim Start werden `.cache/*.html` gelöscht, die älter sind als X Tage
+(nach Datei-`mtime`). `0` = Aufräumen aus.
 
 ## Ausgabe
 
@@ -142,7 +146,7 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 ### Robustheit
 
 - [x] `verify=False` dokumentiert (unvollständige Kette auf `results.equi-score.com`)
-- [ ] Cache aufräumen (aktuell wächst `.cache/` unbegrenzt)
+- [x] Cache aufräumen: `.cache/`-Dateien älter als `cache_max_age_days` (Default 14)
 - [ ] Parser-Null-Checks wo noch nötig (Fallback-DOM-Pfad)
 
 ### Matching

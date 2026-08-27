@@ -100,6 +100,22 @@ def fetch(url: str, use_cache=True) -> str:
     return html
 
 
+def prune_cache(max_age_days: float) -> int:
+    """Delete cached HTML files older than max_age_days (by mtime). 0 = disabled."""
+    if max_age_days <= 0 or not CACHE_DIR.exists():
+        return 0
+    cutoff = time.time() - max_age_days * 86400
+    removed = 0
+    for path in CACHE_DIR.glob("*.html"):
+        try:
+            if path.stat().st_mtime < cutoff:
+                path.unlink()
+                removed += 1
+        except OSError:
+            continue
+    return removed
+
+
 def prefer_german_url(url: str) -> str:
     if url.endswith("/en"):
         return url[:-3] + "/de"

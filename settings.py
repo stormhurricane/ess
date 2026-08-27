@@ -18,6 +18,7 @@ DEFAULTS: dict = {
     "event_workers": 4,
     "fetch_workers": 6,
     "output": "result.json",
+    "cache_max_age_days": 14,
 }
 
 # Upper caps so UI/settings cannot hammer equi-score or burn Actions minutes.
@@ -30,6 +31,7 @@ MAX: dict = {
     "max_in_flight": 16,
     "event_workers": 8,
     "fetch_workers": 12,
+    "cache_max_age_days": 90,
 }
 
 MIN: dict = {
@@ -41,6 +43,7 @@ MIN: dict = {
     "max_in_flight": 1,
     "event_workers": 1,
     "fetch_workers": 1,
+    "cache_max_age_days": 0,
 }
 
 
@@ -71,6 +74,7 @@ def normalize_settings(raw: dict | None) -> dict:
         "max_in_flight",
         "event_workers",
         "fetch_workers",
+        "cache_max_age_days",
     ):
         if key in raw and raw[key] is not None:
             out[key] = _clamp_number(key, raw[key])

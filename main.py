@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from config_entries import active_names
 from events import get_events, weekend_scope_mondays
-from fetch import MAX_IN_FLIGHT
+from fetch import MAX_IN_FLIGHT, prune_cache
 from match import (
     build_rider_index,
     match_event_against_config,
@@ -51,6 +51,12 @@ def write_result(result_dict: dict, path: str) -> None:
 def main() -> None:
     settings = load_settings()
     apply_settings(settings)
+
+    max_age = settings["cache_max_age_days"]
+    if max_age > 0:
+        removed = prune_cache(max_age)
+        if removed:
+            print(f"Cache: removed {removed} file(s) older than {max_age} days.")
 
     config = load_config()
     nations = config.get("nations")

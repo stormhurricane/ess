@@ -7,5 +7,6 @@
   "max_in_flight": 8,
   "event_workers": 4,
   "fetch_workers": 6,
-  "output": "result.json"
+  "output": "result.json",
+  "cache_max_age_days": 14
 }
