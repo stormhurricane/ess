@@ -2,6 +2,7 @@ import unittest
 
 from match import (
     build_rider_index,
+    event_hit,
     format_event_label,
     horse_matches,
     match_event_against_config,
@@ -91,6 +92,38 @@ class BuildRiderIndexTests(unittest.TestCase):
         self.assertEqual(index["zufall"], ["zoe zufall"])
 
 
+class EventHitTests(unittest.TestCase):
+    def test_location_date_url(self):
+        event = {
+            "location": "Musterstadt",
+            "date": "Sa 01.01.",
+            "link": "https://results.equi-score.com/event/2099/1/de",
+        }
+        self.assertEqual(
+            event_hit(event),
+            {
+                "location": "Musterstadt",
+                "date": "Sa 01.01.",
+                "url": "https://results.equi-score.com/event/2099/1/de",
+            },
+        )
+
+    def test_strips_whitespace(self):
+        event = {
+            "location": "  Musterstadt  ",
+            "date": " Sa 01.01. ",
+            "link": " https://example.test/e ",
+        }
+        self.assertEqual(
+            event_hit(event),
+            {
+                "location": "Musterstadt",
+                "date": "Sa 01.01.",
+                "url": "https://example.test/e",
+            },
+        )
+
+
 class FormatEventLabelTests(unittest.TestCase):
     def test_location_date_link(self):
         event = {
@@ -141,10 +174,10 @@ class MatchEventAgainstConfigTests(unittest.TestCase):
             horse_display=self.horse_display,
         )
         self.assertIn("BEISPIEL, Ada", riders)
-        expected_label = format_event_label(self.event)
-        self.assertEqual(riders["BEISPIEL, Ada"], [expected_label])
+        expected_hit = event_hit(self.event)
+        self.assertEqual(riders["BEISPIEL, Ada"], [expected_hit])
         self.assertIn("Sturmwolke", horses)
-        self.assertEqual(horses["Sturmwolke"], [expected_label])
+        self.assertEqual(horses["Sturmwolke"], [expected_hit])
 
     def test_uses_config_display_spelling(self):
         starterliste = {"gefundene_reiter": ["A. Beispiel"], "gefundene_pferde": []}

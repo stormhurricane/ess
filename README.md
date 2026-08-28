@@ -107,8 +107,23 @@ Getrennt von der Such-Config. Vorlage: `settings.example.json`.
 
 ## Ausgabe
 
-`result.json` gruppiert Treffer nach Reiter und Pferd (Schlüssel = Schreibweise aus der Config),
-jeweils mit Ort, Datum und Link.
+`result.json` gruppiert Treffer nach Reiter und Pferd (Schlüssel = Schreibweise aus der Config).
+Pro Treffer ein Objekt mit `location`, `date`, `url`:
+
+```json
+{
+  "gefundene_reiter": {
+    "Max Mustermann": [
+      {
+        "location": "Musterstadt",
+        "date": "Sa 01.01.",
+        "url": "https://results.equi-score.com/event/123/1/de"
+      }
+    ]
+  },
+  "gefundene_pferde": {}
+}
+```
 
 `.cache/` und `result.json` sind lokal und nicht versioniert.
 
@@ -177,7 +192,7 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 ### Ausgabe und CLI
 
 - [x] Einheitliche Event-Labels (Ort/Datum strippen, gleiches Format für Reiter und Pferde)
-- [ ] Strukturierte JSON-Objekte statt zusammengebauter Strings
+- [x] Strukturierte JSON-Objekte statt zusammengebauter Strings
 - [ ] CLI: `--config`, `--output`, `--no-cache`
 - [ ] Kurz-Summary auf stdout, nicht nur `DONE`
 
@@ -196,7 +211,7 @@ CLI (`python main.py` + lokale `config.yaml`) bleibt. Web und Actions kommen **d
 ### Zielbild
 
 - [ ] Privates Repo: Config/Result nicht öffentlich; CLI und Cloud parallel
-- [ ] Strukturierte `result.json` (Objekte mit Ort/Datum/URL), keine Display-Strings
+- [x] Strukturierte `result.json` (Objekte mit Ort/Datum/URL), keine Display-Strings
 - [ ] Vercel-Frontend (React o.ä.) hinter Basic Auth („htpasswd“-Feeling)
 - [ ] Config im privaten Repo speichern; Vercel-API liest/schreibt per GitHub-Token (nur serverseitig)
 - [ ] GitHub Actions: fester Cron + `workflow_dispatch` („Jetzt scrapen“)

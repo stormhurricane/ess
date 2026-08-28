@@ -44,10 +44,10 @@ def empty_result() -> dict:
 
 
 def merge_hits(result_dict: dict, riders_hits: dict, horses_hits: dict) -> None:
-    for name, labels in riders_hits.items():
-        result_dict["gefundene_reiter"].setdefault(name, []).extend(labels)
-    for name, labels in horses_hits.items():
-        result_dict["gefundene_pferde"].setdefault(name, []).extend(labels)
+    for name, hits in riders_hits.items():
+        result_dict["gefundene_reiter"].setdefault(name, []).extend(hits)
+    for name, hits in horses_hits.items():
+        result_dict["gefundene_pferde"].setdefault(name, []).extend(hits)
 
 
 def write_result(result_dict: dict, path: str) -> None:

@@ -82,12 +82,19 @@ def build_rider_index(riders: list[str]) -> dict[str, list[str]]:
     return index
 
 
+def event_hit(event) -> dict:
+    """Structured hit for result.json: location, date, url."""
+    return {
+        "location": (event.get("location") or "").strip(),
+        "date": (event.get("date") or "").strip(),
+        "url": (event.get("link") or "").strip(),
+    }
+
+
 def format_event_label(event) -> str:
-    """Single display label for a hit: location, date, link."""
-    location = (event.get("location") or "").strip()
-    date = (event.get("date") or "").strip()
-    link = (event.get("link") or "").strip()
-    return f"{location} {date} ({link})"
+    """Display label derived from event_hit (for CLI/logging)."""
+    hit = event_hit(event)
+    return f"{hit['location']} {hit['date']} ({hit['url']})"
 
 
 def match_event_against_config(
@@ -115,8 +122,8 @@ def match_event_against_config(
             continue
         for rider in rider_index[last]:
             if rider_matches(gefundener_reiter, rider):
-                label = format_event_label(event)
-                riders_hits.setdefault(rider_display.get(rider, rider), []).append(label)
+                hit = event_hit(event)
+                riders_hits.setdefault(rider_display.get(rider, rider), []).append(hit)
                 break
 
     for horse_name in starterliste["gefundene_pferde"]:
@@ -124,8 +131,8 @@ def match_event_against_config(
             break
         for pferd in list_of_horses:
             if horse_matches(horse_name, pferd):
-                label = format_event_label(event)
-                horses_hits.setdefault(horse_display.get(pferd, pferd), []).append(label)
+                hit = event_hit(event)
+                horses_hits.setdefault(horse_display.get(pferd, pferd), []).append(hit)
                 break
 
     return riders_hits, horses_hits
