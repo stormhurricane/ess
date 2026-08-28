@@ -43,11 +43,35 @@ def rider_matches(found: str, search: str) -> bool:
     return False
 
 
-def normalize_horse(name: str) -> str:
+def normalize_horse_base(name: str) -> str:
     name = name.lower().strip()
-    # ohne Nummern
-    name = re.sub(r"\s\d+$", "", name)
+    return re.sub(r"\s+", " ", name)
+
+
+_TRAILING_START_NUMBER = re.compile(r"\s\d+$")
+
+
+def horse_config_has_start_number(name: str) -> bool:
+    return bool(_TRAILING_START_NUMBER.search(normalize_horse_base(name)))
+
+
+def normalize_horse(name: str, *, strip_trailing_number: bool = False) -> str:
+    name = normalize_horse_base(name)
+    if strip_trailing_number:
+        name = _TRAILING_START_NUMBER.sub("", name)
     return name
+
+
+def horse_matches(found: str, search: str) -> bool:
+    """Match found list name against config horse.
+
+    Config without trailing start number (e.g. Chili): ignore number on found side.
+    Config with trailing number (e.g. Diamond 110): exact match including number.
+    """
+    search_n = normalize_horse_base(search)
+    if horse_config_has_start_number(search):
+        return normalize_horse_base(found) == search_n
+    return normalize_horse(found, strip_trailing_number=True) == search_n
 
 
 def build_rider_index(riders: list[str]) -> dict[str, list[str]]:
@@ -81,7 +105,7 @@ def match_event_against_config(event, starterliste, rider_index, list_of_horses)
         if not list_of_horses:
             break
         for pferd in list_of_horses:
-            if normalize_horse(horse_name) == normalize_horse(pferd):
+            if horse_matches(horse_name, pferd):
                 label = (
                     event["location"]
                     + " ("

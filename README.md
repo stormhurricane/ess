@@ -74,8 +74,9 @@ nations:
 ```
 
 - **Reiter:** Nachname muss passen; Vorname exakt oder als Initiale (`L. Mustermann`).
-- **Pferde:** Vergleich ohne Groß/Kleinschreibung; eine Nummer am Ende (`Chili 57`)
-  wird aktuell abgeschnitten — kurze Namen können zu Falschtreffern führen.
+- **Pferde:** Vergleich ohne Groß/Kleinschreibung. **Ohne** Nummer in der Config
+  (`Chili`) wird eine Startnummer auf der Liste ignoriert (`Chili 57`). **Mit** Nummer
+  in der Config (`Diamond 110`) muss exakt passen — kein pauschales Abschneiden.
 - **Nationen:** Equi-score-Codes (`GER`). Fehlt der Key oder ist die Liste leer, gilt `GER`.
 - **Aktiv:** Einträge als `{name, active}`. Nur `active: true` wird gesucht
   (`active` fehlt → aktiv). Reine Strings (`- Max Mustermann`) gehen weiter.
@@ -151,7 +152,7 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 
 ### Matching
 
-- [ ] Pferdenamen nicht pauschal um die Startnummer kürzen (`Diamond 110` → `diamond`)
+- [x] Pferdenamen: Startnummer nur streichen, wenn Config keine hat (`Chili` ja, `Diamond 110` nein)
 - [ ] Initiale-Match optional (sonst trifft `L. Scharrer` auch Laura Scharrer)
 - [ ] Config-Namen als Anzeige behalten, nicht `str.title()`
 

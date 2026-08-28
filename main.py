@@ -10,6 +10,8 @@ from match import (
     build_rider_index,
     match_event_against_config,
     normalize_horse,
+    normalize_horse_base,
+    horse_matches,
     normalize_name,
 )
 from settings import apply_settings, load_settings
@@ -60,7 +62,7 @@ def main() -> None:
 
     config = load_config()
     nations = config.get("nations")
-    list_of_horses = [normalize_horse(x) for x in active_names(config.get("horses"))]
+    list_of_horses = [normalize_horse_base(x) for x in active_names(config.get("horses"))]
     list_of_riders = [normalize_name(x) for x in active_names(config.get("riders"))]
     rider_index = build_rider_index(list_of_riders)
 

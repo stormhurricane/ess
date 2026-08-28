@@ -2,8 +2,10 @@ import unittest
 
 from match import (
     build_rider_index,
+    horse_matches,
     match_event_against_config,
     normalize_horse,
+    normalize_horse_base,
     normalize_name,
     rider_matches,
 )
@@ -22,13 +24,38 @@ class NormalizeNameTests(unittest.TestCase):
 
 class NormalizeHorseTests(unittest.TestCase):
     def test_lower_and_strip(self):
-        self.assertEqual(normalize_horse("  Sturmwolke  "), "sturmwolke")
+        self.assertEqual(normalize_horse_base("  Sturmwolke  "), "sturmwolke")
 
-    def test_strips_trailing_start_number(self):
-        self.assertEqual(normalize_horse("Sturmwolke 12"), "sturmwolke")
+    def test_strips_trailing_start_number_only_when_asked(self):
+        self.assertEqual(
+            normalize_horse("Sturmwolke 12", strip_trailing_number=True),
+            "sturmwolke",
+        )
+        self.assertEqual(
+            normalize_horse("Sturmwolke 12", strip_trailing_number=False),
+            "sturmwolke 12",
+        )
 
     def test_keeps_numbers_inside_name(self):
-        self.assertEqual(normalize_horse("Star 110 Flash"), "star 110 flash")
+        self.assertEqual(
+            normalize_horse_base("Star 110 Flash"),
+            "star 110 flash",
+        )
+
+
+class HorseMatchesTests(unittest.TestCase):
+    def test_config_without_number_matches_found_with_start_number(self):
+        self.assertTrue(horse_matches("Sturmwolke 12", "Sturmwolke"))
+
+    def test_config_with_number_requires_exact_match(self):
+        self.assertTrue(horse_matches("Star 110 Flash", "Star 110 Flash"))
+        self.assertFalse(horse_matches("Star 110 Flash", "Star 110"))
+        self.assertFalse(horse_matches("Star 99 Flash", "Star 110 Flash"))
+
+    def test_config_with_number_rejects_different_start_number(self):
+        self.assertTrue(horse_matches("Diamond 110", "Diamond 110"))
+        self.assertFalse(horse_matches("Diamond 99", "Diamond 110"))
+        self.assertFalse(horse_matches("Diamond", "Diamond 110"))
 
 
 class RiderMatchesTests(unittest.TestCase):
@@ -71,7 +98,7 @@ class MatchEventAgainstConfigTests(unittest.TestCase):
             "link": "https://results.equi-score.com/event/2099/1/de",
         }
         self.rider_index = build_rider_index(["ada beispiel", "otto muster"])
-        self.horses = ["sturmwolke", "nebelpony"]
+        self.horses = ["sturmwolke", "star 110 flash"]
 
     def test_matches_rider_and_horse(self):
         starterliste = {
@@ -97,6 +124,17 @@ class MatchEventAgainstConfigTests(unittest.TestCase):
                 "https://results.equi-score.com/event/2099/1/de"
             ],
         )
+
+    def test_numbered_config_horse_matches_exactly(self):
+        starterliste = {
+            "gefundene_reiter": [],
+            "gefundene_pferde": ["Star 110 Flash", "Star 99 Flash"],
+        }
+        _, horses = match_event_against_config(
+            self.event, starterliste, self.rider_index, self.horses
+        )
+        self.assertIn("Star 110 Flash", horses)
+        self.assertNotIn("Star 99 Flash", horses)
 
     def test_ignores_unrelated_names(self):
         starterliste = {
