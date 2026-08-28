@@ -1,6 +1,6 @@
 # ESS — Equi-Score Scraper
 
-**v1.0** — lokales CLI. GUI/Cloud-Ideen: Roadmap am Ende.
+**v1.1** — lokales CLI. GUI/Cloud-Ideen: Roadmap am Ende.
 
 Sucht auf [equi-score.de](https://www.equi-score.de/) deutsche Turniere und prüft,
 ob konfigurierte Reiter oder Pferde in den Starterlisten stehen.
@@ -211,7 +211,7 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 
 
 
-## Roadmap — GUI / Cloud (nach v1.0)
+## Roadmap — GUI / Cloud (nach v1.1)
 
 CLI (`python main.py` + lokale `config.yaml`) bleibt. Web und Actions kommen **dazu**, nicht als Ersatz.
 
