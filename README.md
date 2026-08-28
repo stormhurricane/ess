@@ -207,7 +207,7 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 
 ### Aufräumen
 
-- [ ] `requirements.txt` mit `==` pinnen, `beautifulsoup4` statt `bs4`
+- [x] `requirements.txt` mit `==` pinnen, `beautifulsoup4` statt `bs4`
 
 
 
