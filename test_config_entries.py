@@ -1,6 +1,6 @@
 import unittest
 
-from config_entries import active_names, entry_is_active, entry_name
+from config_entries import active_names, active_search_entries, entry_is_active, entry_name
 
 
 class EntryNameTests(unittest.TestCase):
@@ -47,6 +47,19 @@ class ActiveNamesTests(unittest.TestCase):
     def test_empty(self):
         self.assertEqual(active_names(None), [])
         self.assertEqual(active_names([]), [])
+
+
+class ActiveSearchEntriesTests(unittest.TestCase):
+    def test_normalizes_and_keeps_display_spelling(self):
+        entries = [
+            "BEISPIEL, Ada",
+            {"name": "Sturmwolke", "active": True},
+            {"name": "Otto Muster", "active": False},
+        ]
+        names, display = active_search_entries(entries, lambda n: n.lower())
+        self.assertEqual(names, ["beispiel, ada", "sturmwolke"])
+        self.assertEqual(display["beispiel, ada"], "BEISPIEL, Ada")
+        self.assertEqual(display["sturmwolke"], "Sturmwolke")
 
 
 if __name__ == "__main__":

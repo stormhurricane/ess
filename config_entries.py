@@ -26,10 +26,17 @@ def entry_is_active(entry) -> bool:
 
 def active_names(entries) -> list[str]:
     """Names to search: only active entries, order preserved, duplicates kept once."""
+    names, _ = active_search_entries(entries, lambda name: name)
+    return names
+
+
+def active_search_entries(entries, normalize_fn) -> tuple[list[str], dict[str, str]]:
+    """Normalized names for matching and norm → original config display name."""
     if not entries:
-        return []
-    seen = set()
-    out = []
+        return [], {}
+    seen: set[str] = set()
+    names: list[str] = []
+    display: dict[str, str] = {}
     for entry in entries:
         if not entry_is_active(entry):
             continue
@@ -37,5 +44,7 @@ def active_names(entries) -> list[str]:
         if not name or name in seen:
             continue
         seen.add(name)
-        out.append(name)
-    return out
+        norm = normalize_fn(name)
+        names.append(norm)
+        display.setdefault(norm, name)
+    return names, display

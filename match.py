@@ -82,8 +82,18 @@ def build_rider_index(riders: list[str]) -> dict[str, list[str]]:
     return index
 
 
-def match_event_against_config(event, starterliste, rider_index, list_of_horses):
+def match_event_against_config(
+    event,
+    starterliste,
+    rider_index,
+    list_of_horses,
+    *,
+    rider_display: dict[str, str] | None = None,
+    horse_display: dict[str, str] | None = None,
+):
     """Return rider/horse hits for one event (thread-safe; no shared mutation)."""
+    rider_display = rider_display or {}
+    horse_display = horse_display or {}
     riders_hits = {}
     horses_hits = {}
 
@@ -98,7 +108,7 @@ def match_event_against_config(event, starterliste, rider_index, list_of_horses)
         for rider in rider_index[last]:
             if rider_matches(gefundener_reiter, rider):
                 label = f"{event['location']} {event['date']} ({event['link']})"
-                riders_hits.setdefault(rider.title(), []).append(label)
+                riders_hits.setdefault(rider_display.get(rider, rider), []).append(label)
                 break
 
     for horse_name in starterliste["gefundene_pferde"]:
@@ -113,7 +123,7 @@ def match_event_against_config(event, starterliste, rider_index, list_of_horses)
                     + ") Link: "
                     + event["link"]
                 )
-                horses_hits.setdefault(horse_name, []).append(label)
+                horses_hits.setdefault(horse_display.get(pferd, pferd), []).append(label)
                 break
 
     return riders_hits, horses_hits

@@ -98,7 +98,9 @@ class MatchEventAgainstConfigTests(unittest.TestCase):
             "link": "https://results.equi-score.com/event/2099/1/de",
         }
         self.rider_index = build_rider_index(["ada beispiel", "otto muster"])
+        self.rider_display = {"ada beispiel": "BEISPIEL, Ada", "otto muster": "Otto Muster"}
         self.horses = ["sturmwolke", "star 110 flash"]
+        self.horse_display = {"sturmwolke": "Sturmwolke", "star 110 flash": "Star 110 Flash"}
 
     def test_matches_rider_and_horse(self):
         starterliste = {
@@ -106,24 +108,42 @@ class MatchEventAgainstConfigTests(unittest.TestCase):
             "gefundene_pferde": ["Sturmwolke 12"],
         }
         riders, horses = match_event_against_config(
-            self.event, starterliste, self.rider_index, self.horses
+            self.event,
+            starterliste,
+            self.rider_index,
+            self.horses,
+            rider_display=self.rider_display,
+            horse_display=self.horse_display,
         )
-        self.assertIn("Ada Beispiel", riders)
+        self.assertIn("BEISPIEL, Ada", riders)
         self.assertEqual(
-            riders["Ada Beispiel"],
+            riders["BEISPIEL, Ada"],
             [
                 "Musterstadt Sa 01.01. "
                 "(https://results.equi-score.com/event/2099/1/de)"
             ],
         )
-        self.assertIn("Sturmwolke 12", horses)
+        self.assertIn("Sturmwolke", horses)
         self.assertEqual(
-            horses["Sturmwolke 12"],
+            horses["Sturmwolke"],
             [
                 "Musterstadt (Sa 01.01.) Link: "
                 "https://results.equi-score.com/event/2099/1/de"
             ],
         )
+
+    def test_uses_config_display_spelling(self):
+        starterliste = {"gefundene_reiter": ["A. Beispiel"], "gefundene_pferde": []}
+        rider_index = build_rider_index(["a beispiel"])
+        riders, _ = match_event_against_config(
+            self.event,
+            starterliste,
+            rider_index,
+            [],
+            rider_display={"a beispiel": "A. Beispiel"},
+        )
+        self.assertIn("A. Beispiel", riders)
+        self.assertNotIn("A Beispiel", riders)
 
     def test_numbered_config_horse_matches_exactly(self):
         starterliste = {
@@ -131,7 +151,11 @@ class MatchEventAgainstConfigTests(unittest.TestCase):
             "gefundene_pferde": ["Star 110 Flash", "Star 99 Flash"],
         }
         _, horses = match_event_against_config(
-            self.event, starterliste, self.rider_index, self.horses
+            self.event,
+            starterliste,
+            self.rider_index,
+            self.horses,
+            horse_display=self.horse_display,
         )
         self.assertIn("Star 110 Flash", horses)
         self.assertNotIn("Star 99 Flash", horses)
@@ -142,7 +166,12 @@ class MatchEventAgainstConfigTests(unittest.TestCase):
             "gefundene_pferde": ["Mondlicht 3"],
         }
         riders, horses = match_event_against_config(
-            self.event, starterliste, self.rider_index, self.horses
+            self.event,
+            starterliste,
+            self.rider_index,
+            self.horses,
+            rider_display=self.rider_display,
+            horse_display=self.horse_display,
         )
         self.assertEqual(riders, {})
         self.assertEqual(horses, {})

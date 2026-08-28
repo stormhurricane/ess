@@ -107,7 +107,8 @@ Getrennt von der Such-Config. Vorlage: `settings.example.json`.
 
 ## Ausgabe
 
-`result.json` gruppiert Treffer nach Reiter und Pferd, jeweils mit Ort, Datum und Link.
+`result.json` gruppiert Treffer nach Reiter und Pferd (Schlüssel = Schreibweise aus der Config),
+jeweils mit Ort, Datum und Link.
 
 `.cache/` und `result.json` sind lokal und nicht versioniert.
 
@@ -169,7 +170,7 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 ### Matching
 
 - [x] Pferdenamen: Startnummer nur streichen, wenn Config keine hat (`Chili` ja, `Diamond 110` nein)
-- [ ] Config-Namen als Anzeige behalten, nicht `str.title()`
+- [x] Config-Namen als Anzeige behalten, nicht `str.title()`
 
 
 

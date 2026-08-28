@@ -3,15 +3,13 @@ import json
 import yaml
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from config_entries import active_names
+from config_entries import active_search_entries
 from events import get_events, weekend_scope_mondays
 from fetch import MAX_IN_FLIGHT, prune_cache
 from match import (
     build_rider_index,
     match_event_against_config,
-    normalize_horse,
     normalize_horse_base,
-    horse_matches,
     normalize_name,
 )
 from settings import apply_settings, load_settings
@@ -20,12 +18,19 @@ from starters import FETCH_WORKERS, get_starterliste
 CONFIG_PATH = "config.yaml"
 
 
-def process_event(event, rider_index, list_of_horses):
+def process_event(event, rider_index, list_of_horses, rider_display, horse_display):
     try:
         starterliste = get_starterliste(event["link"])
     except Exception as exc:
         return event, None, exc
-    hits = match_event_against_config(event, starterliste, rider_index, list_of_horses)
+    hits = match_event_against_config(
+        event,
+        starterliste,
+        rider_index,
+        list_of_horses,
+        rider_display=rider_display,
+        horse_display=horse_display,
+    )
     return event, hits, None
 
 
@@ -62,8 +67,12 @@ def main() -> None:
 
     config = load_config()
     nations = config.get("nations")
-    list_of_horses = [normalize_horse_base(x) for x in active_names(config.get("horses"))]
-    list_of_riders = [normalize_name(x) for x in active_names(config.get("riders"))]
+    list_of_horses, horse_display = active_search_entries(
+        config.get("horses"), normalize_horse_base
+    )
+    list_of_riders, rider_display = active_search_entries(
+        config.get("riders"), normalize_name
+    )
     rider_index = build_rider_index(list_of_riders)
 
     event_workers = settings["event_workers"]
@@ -83,7 +92,14 @@ def main() -> None:
     done = 0
     with ThreadPoolExecutor(max_workers=event_workers) as pool:
         futures = [
-            pool.submit(process_event, event, rider_index, list_of_horses)
+            pool.submit(
+                process_event,
+                event,
+                rider_index,
+                list_of_horses,
+                rider_display,
+                horse_display,
+            )
             for event in events
         ]
         for fut in as_completed(futures):
