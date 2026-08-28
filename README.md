@@ -176,7 +176,7 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 
 ### Ausgabe und CLI
 
-- [ ] Einheitliche Event-Labels (Ort/Datum strippen, gleiches Format für Reiter und Pferde)
+- [x] Einheitliche Event-Labels (Ort/Datum strippen, gleiches Format für Reiter und Pferde)
 - [ ] Strukturierte JSON-Objekte statt zusammengebauter Strings
 - [ ] CLI: `--config`, `--output`, `--no-cache`
 - [ ] Kurz-Summary auf stdout, nicht nur `DONE`
