@@ -3,6 +3,8 @@ import json
 import yaml
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from cli import CONFIG_PATH, parse_args
+
 from config_entries import active_search_entries
 from events import get_events, weekend_scope_mondays
 from fetch import MAX_IN_FLIGHT, prune_cache
@@ -14,8 +16,6 @@ from match import (
 )
 from settings import apply_settings, load_settings
 from starters import FETCH_WORKERS, get_starterliste
-
-CONFIG_PATH = "config.yaml"
 
 
 def process_event(event, rider_index, list_of_horses, rider_display, horse_display):
@@ -55,17 +55,24 @@ def write_result(result_dict: dict, path: str) -> None:
         json.dump(result_dict, f, ensure_ascii=False, indent=4)
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
     settings = load_settings()
-    apply_settings(settings)
+    if args.output:
+        path = args.output.strip()
+        if path:
+            settings["output"] = path
+    apply_settings(settings, use_cache=not args.no_cache)
 
     max_age = settings["cache_max_age_days"]
     if max_age > 0:
         removed = prune_cache(max_age)
         if removed:
             print(f"Cache: removed {removed} file(s) older than {max_age} days.")
+    if args.no_cache:
+        print("Cache: reads disabled (--no-cache).")
 
-    config = load_config()
+    config = load_config(args.config)
     nations = config.get("nations")
     list_of_horses, horse_display = active_search_entries(
         config.get("horses"), normalize_horse_base

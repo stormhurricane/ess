@@ -107,7 +107,7 @@ def load_settings(path: str | Path = SETTINGS_PATH) -> dict:
     return normalize_settings(raw)
 
 
-def apply_settings(settings: dict) -> None:
+def apply_settings(settings: dict, *, use_cache: bool = True) -> None:
     """Push runtime values into fetch / starters modules."""
     import fetch
     import starters
@@ -118,5 +118,6 @@ def apply_settings(settings: dict) -> None:
         request_delay=(settings["request_delay_min"], settings["request_delay_max"]),
         max_in_flight=settings["max_in_flight"],
         request_timeout=settings["request_timeout"],
+        use_cache=use_cache,
     )
     starters.apply_settings(fetch_workers=settings["fetch_workers"])

@@ -28,7 +28,14 @@ Defaults aus dem Code (Werte werden auf Min/Max begrenzt).
 
 ```bash
 python main.py
+python main.py --config other.yaml --output woche.json --no-cache
 ```
+
+| Flag | Wirkung |
+| ---- | ------- |
+| `--config PATH` | Such-Config (Default: `config.yaml`) |
+| `--output PATH` | Ergebnis-JSON (überschreibt `settings.json` → `output`) |
+| `--no-cache` | Cache nicht lesen; frische HTTP-Antworten (schreibt weiter nach `.cache/`) |
 
 Das Skript:
 
@@ -193,7 +200,7 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 
 - [x] Einheitliche Event-Labels (Ort/Datum strippen, gleiches Format für Reiter und Pferde)
 - [x] Strukturierte JSON-Objekte statt zusammengebauter Strings
-- [ ] CLI: `--config`, `--output`, `--no-cache`
+- [x] CLI: `--config`, `--output`, `--no-cache`
 - [ ] Kurz-Summary auf stdout, nicht nur `DONE`
 
 

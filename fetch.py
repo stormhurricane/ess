@@ -26,6 +26,7 @@ EMPTY_RIDERS_CACHE_HOURS = 0.25
 
 _http_slots = threading.Semaphore(MAX_IN_FLIGHT)
 _thread_local = threading.local()
+USE_CACHE = True
 
 
 def apply_settings(
@@ -35,10 +36,11 @@ def apply_settings(
     request_delay: tuple[float, float] | None = None,
     max_in_flight: int | None = None,
     request_timeout: int | None = None,
+    use_cache: bool | None = None,
 ) -> None:
     """Update runtime HTTP/cache knobs (called from settings.apply_settings)."""
     global CACHE_HOURS, EMPTY_RIDERS_CACHE_HOURS, REQUEST_DELAY
-    global MAX_IN_FLIGHT, REQUEST_TIMEOUT, _http_slots
+    global MAX_IN_FLIGHT, REQUEST_TIMEOUT, _http_slots, USE_CACHE
 
     if cache_hours is not None:
         CACHE_HOURS = cache_hours
@@ -48,6 +50,8 @@ def apply_settings(
         REQUEST_DELAY = request_delay
     if request_timeout is not None:
         REQUEST_TIMEOUT = request_timeout
+    if use_cache is not None:
+        USE_CACHE = use_cache
     if max_in_flight is not None and max_in_flight != MAX_IN_FLIGHT:
         MAX_IN_FLIGHT = max_in_flight
         _http_slots = threading.Semaphore(MAX_IN_FLIGHT)
@@ -82,7 +86,7 @@ def looks_like_empty_riders_page(html: str) -> bool:
 def fetch(url: str, use_cache=True) -> str:
     path = cache_path(url)
 
-    if use_cache and path.exists():
+    if use_cache and USE_CACHE and path.exists():
         cached = path.read_text(encoding="utf-8")
         hours = CACHE_HOURS
         if "/riders/" in url and looks_like_empty_riders_page(cached):
