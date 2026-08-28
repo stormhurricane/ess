@@ -75,27 +75,32 @@ nations:
 
 - **Reiter:** Nachname muss passen; Vorname exakt oder als Initiale (`L. Mustermann`).
 - **Pferde:** Vergleich ohne Groß/Kleinschreibung. **Ohne** Nummer in der Config
-  (`Chili`) wird eine Startnummer auf der Liste ignoriert (`Chili 57`). **Mit** Nummer
-  in der Config (`Diamond 110`) muss exakt passen — kein pauschales Abschneiden.
+(`Chili`) wird eine Startnummer auf der Liste ignoriert (`Chili 57`). **Mit** Nummer
+in der Config (`Diamond 110`) muss exakt passen — kein pauschales Abschneiden.
 - **Nationen:** Equi-score-Codes (`GER`). Fehlt der Key oder ist die Liste leer, gilt `GER`.
 - **Aktiv:** Einträge als `{name, active}`. Nur `active: true` wird gesucht
-  (`active` fehlt → aktiv). Reine Strings (`- Max Mustermann`) gehen weiter.
-  Später GUI: Toggle = `active`, Löschen = Eintrag entfernen.
+(`active` fehlt → aktiv). Reine Strings (`- Max Mustermann`) gehen weiter.
+Später GUI: Toggle = `active`, Löschen = Eintrag entfernen.
+
+
+
 ### Technische Settings (`settings.json`)
 
 Getrennt von der Such-Config. Vorlage: `settings.example.json`.
 
-| Key | Default | Min | Max |
-|-----|---------|-----|-----|
-| `cache_hours` | 6 | 0 | 168 |
-| `empty_riders_cache_hours` | 0.25 | 0 | 24 |
-| `request_delay_min` / `request_delay_max` | 0.2 / 0.5 | 0 | 10 |
-| `request_timeout` | 30 | 5 | 120 |
-| `max_in_flight` | 8 | 1 | 16 |
-| `event_workers` | 4 | 1 | 8 |
-| `fetch_workers` | 6 | 1 | 12 |
-| `output` | `result.json` | — | — |
-| `cache_max_age_days` | 14 | 0 (aus) | 90 |
+
+| Key                                       | Default       | Min     | Max |
+| ----------------------------------------- | ------------- | ------- | --- |
+| `cache_hours`                             | 6             | 0       | 168 |
+| `empty_riders_cache_hours`                | 0.25          | 0       | 24  |
+| `request_delay_min` / `request_delay_max` | 0.2 / 0.5     | 0       | 10  |
+| `request_timeout`                         | 30            | 5       | 120 |
+| `max_in_flight`                           | 8             | 1       | 16  |
+| `event_workers`                           | 4             | 1       | 8   |
+| `fetch_workers`                           | 6             | 1       | 12  |
+| `output`                                  | `result.json` | —       | —   |
+| `cache_max_age_days`                      | 14            | 0 (aus) | 90  |
+
 
 `cache_max_age_days`: Beim Start werden `.cache/*.html` gelöscht, die älter sind als X Tage
 (nach Datei-`mtime`). `0` = Aufräumen aus.
@@ -107,6 +112,8 @@ Getrennt von der Such-Config. Vorlage: `settings.example.json`.
 `.cache/` und `result.json` sind lokal und nicht versioniert.
 
 ## TODOs
+
+
 
 ### Erledigt (Stand)
 
@@ -120,6 +127,8 @@ Getrennt von der Such-Config. Vorlage: `settings.example.json`.
 - [x] UTF-8 für Cache und `result.json`
 - [x] `event_cache_testing.json` entfernt
 
+
+
 ### Struktur / Refactoring
 
 Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
@@ -131,11 +140,14 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 - [x] 5. `main.py` — nur Config laden, Events orchestrieren, Ergebnis schreiben
 - [x] 6. leeres `src/` löschen
 
+
+
 ### Tests
 
 - [x] Testdatei(en) für Matching (`normalize_name`, `rider_matches`, `normalize_horse`)
 - [x] Tests für Wochenend-Scope (`weekend_scope_mondays`)
 - [x] Optional: kleine HTML-Fixtures für Payload- und Startlisten-Parser
+
 
 
 ### Config
@@ -144,17 +156,22 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 - [x] optionale technische Settings in `settings.json` (Cache, Workers, Delay, Output; Min/Max)
 - [x] Reiter/Pferde mit `active` (Toggle/Löschen-ready; Strings weiter erlaubt)
 
+
+
 ### Robustheit
 
 - [x] `verify=False` dokumentiert (unvollständige Kette auf `results.equi-score.com`)
 - [x] Cache aufräumen: `.cache/`-Dateien älter als `cache_max_age_days` (Default 14)
 - [x] Parser-Null-Checks im DOM-Fallback (fehlende Elemente → skip, kein Crash)
 
+
+
 ### Matching
 
 - [x] Pferdenamen: Startnummer nur streichen, wenn Config keine hat (`Chili` ja, `Diamond 110` nein)
-- [ ] Initiale-Match optional (sonst trifft `L. Scharrer` auch Laura Scharrer)
 - [ ] Config-Namen als Anzeige behalten, nicht `str.title()`
+
+
 
 ### Ausgabe und CLI
 
@@ -163,9 +180,13 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 - [ ] CLI: `--config`, `--output`, `--no-cache`
 - [ ] Kurz-Summary auf stdout, nicht nur `DONE`
 
+
+
 ### Aufräumen
 
 - [ ] `requirements.txt` mit `==` pinnen, `beautifulsoup4` statt `bs4`
+
+
 
 ## Roadmap — GUI / Cloud (nach v1.0)
 
@@ -181,6 +202,8 @@ CLI (`python main.py` + lokale `config.yaml`) bleibt. Web und Actions kommen **d
 - [ ] Frontend: letzte Config anzeigen/bearbeiten (Toggle `active`, Löschen), Treffer, optional Run
 - [ ] Frontend: optionaler Settings-Hebel (`settings.json`, hinter Auth; Cloud-Limits beachten)
 - [ ] Später optional: Persistenz von Repo-Datei → DB (z.B. Supabase), API-Verträge stabil halten
+
+
 
 ### Bewusst später / nicht v1
 
