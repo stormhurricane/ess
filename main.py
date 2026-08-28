@@ -14,6 +14,7 @@ from match import (
     normalize_horse_base,
     normalize_name,
 )
+from result_summary import print_result_summary
 from settings import apply_settings, load_settings
 from starters import FETCH_WORKERS, get_starterliste
 
@@ -119,8 +120,8 @@ def main(argv: list[str] | None = None) -> None:
                 merge_hits(result_dict, riders_hits, horses_hits)
             print(f"Progress: {'{:.1%}'.format(done / no_of_events)}")
 
-    print("DONE")
     write_result(result_dict, settings["output"])
+    print_result_summary(result_dict, settings["output"])
 
 
 if __name__ == "__main__":

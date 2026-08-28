@@ -43,7 +43,7 @@ Das Skript:
 2. filtert nach Nation (`GER`) und Zeitfenster: **letztes Wochenende** (Vergangenheit) plus das **nächste Wochenende** (jeweils die ganze Kalenderwoche)
 3. holt je Event die Starterliste (`/riders/`); ist die leer, die Klassen-`startlist`/`resultlist`-Seiten
 4. gleicht Namen mit der Config ab
-5. schreibt Treffer nach `result.json`
+5. schreibt Treffer nach `result.json` und gibt eine Kurz-Summary auf stdout aus
 
 Die öffentliche Startseite paginiert (`Load more`) und zeigt standardmäßig nur die aktuelle plus die letzte Kalenderwoche. Die Eventliste selbst steckt vollständig in der Seite — der Scraper liest diese Payload statt sichtbarer HTML-Karten.
 
@@ -201,7 +201,7 @@ Nacheinander, jeweils ohne Verhaltensänderung (`python main.py` bleibt):
 - [x] Einheitliche Event-Labels (Ort/Datum strippen, gleiches Format für Reiter und Pferde)
 - [x] Strukturierte JSON-Objekte statt zusammengebauter Strings
 - [x] CLI: `--config`, `--output`, `--no-cache`
-- [ ] Kurz-Summary auf stdout, nicht nur `DONE`
+- [x] Kurz-Summary auf stdout, nicht nur `DONE`
 
 
 
