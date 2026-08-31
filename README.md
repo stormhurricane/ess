@@ -217,19 +217,118 @@ CLI (`python main.py` + lokale `config.yaml`) bleibt. Web und Actions kommen **d
 
 ### Zielbild
 
-- [ ] Privates Repo: Config/Result nicht öffentlich; CLI und Cloud parallel
-- [x] Strukturierte `result.json` (Objekte mit Ort/Datum/URL), keine Display-Strings
-- [ ] Vercel-Frontend (React o.ä.) hinter Basic Auth („htpasswd“-Feeling)
-- [ ] Config im privaten Repo speichern; Vercel-API liest/schreibt per GitHub-Token (nur serverseitig)
-- [ ] GitHub Actions: fester Cron + `workflow_dispatch` („Jetzt scrapen“)
-- [ ] Frontend: letzte Config anzeigen/bearbeiten (Toggle `active`, Löschen), Treffer, optional Run
-- [ ] Frontend: optionaler Settings-Hebel (`settings.json`, hinter Auth; Cloud-Limits beachten)
-- [ ] Später optional: Persistenz von Repo-Datei → DB (z.B. Supabase), API-Verträge stabil halten
+Kleine **private Web-App** (Vercel): Config pflegen, letzte Treffer ansehen, Scrape per Knopf oder Cron anstoßen. Kein öffentlicher Index, keine Roh-HTML-Suche — nur das, was heute schon die CLI macht, aber ohne Terminal.
 
+**Datenfluss:** GUI ↔ serverseitige API ↔ **privates** GitHub-Repo (`config.yaml`, `result.json`, optional `settings.json`). Der Scraper läuft in **GitHub Actions** (Cron + manuell), schreibt `result.json` ins Repo. Das Frontend liest/schreibt Config nur über die API (GitHub-Token nie im Browser).
 
+**Auth:** Basic Auth vor der ganzen App („htpasswd“-Feeling) — reicht für wenige Nutzer.
 
-### Bewusst später / nicht v1
+**Bereits erledigt (CLI-Grundlage):** strukturiertes `result.json` (`location`, `date`, `url`), Config-Einträge mit `{name, active}` — GUI kann darauf aufsetzen.
+
+**Architektur:** Scraper-Workflow in **`ess`** (public, Actions gratis) · Config/Result in **`ess-data`** (private) · GUI in **`web/`** (Vercel).
+
+---
+
+### Tasks (kleine Schritte)
+
+Reihenfolge einhalten — jeder Punkt ist ein abgeschlossener Mini-Schritt.
+
+#### A — Privates Daten-Repo
+
+- [ ] GitHub-Repo `ess-data` anlegen (private)
+- [ ] `config.yaml` aus `config.example.yaml` + Platzhalter-Namen anlegen
+- [ ] Leeres `result.json` anlegen: `{"gefundene_reiter":{},"gefundene_pferde":{}}`
+- [ ] Optional: `settings.json` aus `settings.example.json` (Cloud-Werte konservativ)
+
+#### B — Repo `ess` public machen
+
+Vor Block C — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen (`ess` ist derzeit **private**).
+
+- [ ] Prüfen: keine `config.yaml`, `result.json`, `settings.json`, `.env` im Repo oder in der Git-History
+- [ ] `.gitignore` und `*.example.*`-Vorlagen reichen; echte Daten nur lokal bzw. in `ess-data`
+- [ ] GitHub: `stormhurricane/ess` → Settings → Change visibility → **public**
+- [ ] Kurz verifizieren: Workflow-Tab sichtbar, kein Secret im Code
+
+#### C — Token & Secrets
+
+- [ ] Fine-grained PAT anlegen (nur Repo `ess-data`, Contents read/write)
+- [ ] Secret `ESS_DATA_TOKEN` im **public** Repo `ess` hinterlegen
+- [ ] Optional: Secret `ESS_DATA_REPO` = `stormhurricane/ess-data` (falls nicht hardcoded)
+
+#### D — GitHub Action (Scrape, noch ohne GUI)
+
+- [ ] `.github/workflows/scrape.yml` anlegen (Trigger: nur `workflow_dispatch` zuerst)
+- [ ] Job: `runs-on: ubuntu-latest`
+- [ ] Step: `ess`-Code checkout (Default)
+- [ ] Step: `ess-data` checkout nach `./data` mit `ESS_DATA_TOKEN`
+- [ ] Step: `pip install -r requirements.txt`
+- [ ] Step: `python main.py --config data/config.yaml --output data/result.json`
+- [ ] Step: Commit + Push nur wenn `result.json` geändert (`ESS_DATA_TOKEN`)
+- [ ] Manuell testen: Actions → Run workflow → `result.json` in `ess-data` prüfen
+- [ ] Optional: `actions/cache` für `.cache/` (schnellere Folgeläufe)
+- [ ] Cron ergänzen (z. B. `0 6 * * *`) — erst wenn manueller Lauf stabil
+
+#### E — Vercel-Grundgerüst (read-only)
+
+- [ ] Ordner `web/` — Next.js App scaffolden
+- [ ] Env in Vercel: `ESS_DATA_TOKEN`, `ESS_DATA_REPO`, Basic-Auth-User/Pass
+- [ ] Middleware: Basic Auth auf allen Routen außer `/api/health` (optional)
+- [ ] Vercel-Projekt mit Root `web/` verbinden
+
+#### F — API read-only
+
+- [ ] `GET /api/config` — GitHub Contents API → YAML parsen → JSON
+- [ ] `GET /api/results` — GitHub Contents API → `result.json` parsen
+- [ ] Fehlerfälle: 404, Token fehlt, ungültiges JSON → klare HTTP-Status
+
+#### G — GUI read-only (erster sichtbarer Meilenstein)
+
+- [ ] Layout/Navigation (Config | Treffer)
+- [ ] Seite **Treffer:** Liste aus `GET /api/results`, Links klickbar
+- [ ] Seite **Config:** Reiter/Pferde read-only anzeigen
+- [ ] Leerzustände + Lade-/Fehleranzeige
+- [ ] Deploy auf Vercel, End-to-End testen (Auth → Daten sichtbar)
+
+#### H — Config schreiben
+
+- [ ] `PUT /api/config` — JSON validieren, YAML bauen, GitHub Contents API Update (SHA!)
+- [ ] Validierung: leere Namen, Duplikate abweisen
+- [ ] Config-UI: Eintrag hinzufügen
+- [ ] Config-UI: Toggle `active`
+- [ ] Config-UI: Eintrag löschen
+- [ ] Config-UI: `nations` bearbeiten
+- [ ] Speichern mit Feedback (Loading, Erfolg, Fehler)
+
+#### I — Scrape aus der GUI
+
+- [ ] Fine-grained PAT oder `GITHUB_TOKEN`-Scope: Actions read/write auf **`ess`**
+- [ ] Secret `ESS_WORKFLOW_TOKEN` in Vercel (falls anderer Token als `ESS_DATA_TOKEN`)
+- [ ] `POST /api/scrape` — `workflow_dispatch` für `scrape.yml`
+- [ ] `GET /api/scrape/status` — letzter Workflow-Lauf (Status, Zeit)
+- [ ] UI: Button „Jetzt scrapen“ + Status/Spinner + Hinweis „Ergebnis in ~X Min“
+
+#### J — Feinschliff
+
+- [ ] API-Fehler im UI verständlich anzeigen
+- [ ] README: Setup Abschnitt GUI/Cloud ergänzen
+- [ ] Optional: reduzierte Settings-Seite (`settings.json` read/write)
+- [ ] Optional: Responsives Layout nachziehen
+
+---
+
+### Phase-Übersicht (Referenz)
+
+| Phase | Tasks | Ergebnis |
+| ----- | ----- | -------- |
+| **1** | A + B + C + D | `ess` public, Scrape in Actions, Result in `ess-data` |
+| **2** | E + F + G | Web-App zeigt Config + Treffer (read-only) |
+| **3** | H + I | Config editierbar, Scrape per Knopf |
+| **4** | J | Polish |
+
+---
+
+### Bewusst später / nicht v1 GUI
 
 - [ ] Öffentlicher Voll-Index aller Starterlisten (Frontend sucht ohne Crawl-Config)
-- [ ] Cron-Ausdruck selbst aus der UI ändern (Zeitplan bleibt in der Workflow-YAML)
+- [ ] Cron-Ausdruck aus der UI ändern (Zeitplan bleibt in `scrape.yml`)
 - [ ] Roh-`.cache/`-HTML dem Frontend zum Durchsuchen geben
