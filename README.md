@@ -29,13 +29,16 @@ Defaults aus dem Code (Werte werden auf Min/Max begrenzt).
 ```bash
 python main.py
 python main.py --config other.yaml --output woche.json --no-cache
+python main.py --config data/config.yaml --settings data/settings.json --output data/result.json --quiet
 ```
 
 | Flag | Wirkung |
 | ---- | ------- |
 | `--config PATH` | Such-Config (Default: `config.yaml`) |
+| `--settings PATH` | Technische Settings (Default: `settings.json`) |
 | `--output PATH` | Ergebnis-JSON (überschreibt `settings.json` → `output`) |
 | `--no-cache` | Cache nicht lesen; frische HTTP-Antworten (schreibt weiter nach `.cache/`) |
+| `--quiet` | Keine Treffer-Namen auf stdout (nur Zähler + `Wrote …`; für öffentliche CI-Logs) |
 
 Das Skript:
 
@@ -237,9 +240,9 @@ Reihenfolge einhalten — jeder Punkt ist ein abgeschlossener Mini-Schritt. **B0
 
 #### B0 — CLI für Cloud (vor Action)
 
-- [ ] `--settings PATH` — technische Settings (Default: `settings.json`, analog zu `--config`)
-- [ ] `--quiet` — keine Treffer-Namen auf stdout (für öffentliche Actions-Logs)
-- [ ] README Nutzung: `--settings`, `--quiet` dokumentieren
+- [x] `--settings PATH` — technische Settings (Default: `settings.json`, analog zu `--config`)
+- [x] `--quiet` — keine Treffer-Namen auf stdout (für öffentliche Actions-Logs)
+- [x] README Nutzung: `--settings`, `--quiet` dokumentieren
 
 #### A — Privates Daten-Repo
 
