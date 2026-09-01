@@ -246,10 +246,10 @@ Reihenfolge einhalten — jeder Punkt ist ein abgeschlossener Mini-Schritt. **B0
 
 #### A — Privates Daten-Repo
 
-- [ ] GitHub-Repo `ess-data` anlegen (private, Branch `main`)
-- [ ] `config.yaml` aus `config.example.yaml` + Platzhalter-Namen anlegen
-- [ ] Leeres `result.json` anlegen: `{"gefundene_pferde":{},"gefundene_reiter":{}}` (wie `empty_result()`)
-- [ ] Optional: `settings.json` aus `settings.example.json` (Cloud-Werte konservativ: weniger Workers, längerer Delay)
+- [x] GitHub-Repo `ess-data` anlegen (private, Branch `main`)
+- [x] `config.yaml` aus `config.example.yaml` + Platzhalter-Namen anlegen
+- [x] Leeres `result.json` anlegen: `{"gefundene_pferde":{},"gefundene_reiter":{}}` (wie `empty_result()`)
+- [x] Optional: `settings.json` aus `settings.example.json` (Cloud-Werte konservativ: weniger Workers, längerer Delay)
 
 #### B — Repo `ess` public machen
 
