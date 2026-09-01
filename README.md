@@ -217,54 +217,69 @@ CLI (`python main.py` + lokale `config.yaml`) bleibt. Web und Actions kommen **d
 
 ### Zielbild
 
-Kleine **private Web-App** (Vercel): Config pflegen, letzte Treffer ansehen, Scrape per Knopf oder Cron anstoßen. Kein öffentlicher Index, keine Roh-HTML-Suche — nur das, was heute schon die CLI macht, aber ohne Terminal.
+Kleine **privat zugängliche** Web-App (Vercel): Config pflegen, letzte Treffer ansehen, Scrape per Knopf oder Cron anstoßen. Kein öffentlicher Index, keine Roh-HTML-Suche — nur das, was heute schon die CLI macht, aber ohne Terminal.
 
-**Datenfluss:** GUI ↔ serverseitige API ↔ **privates** GitHub-Repo (`config.yaml`, `result.json`, optional `settings.json`). Der Scraper läuft in **GitHub Actions** (Cron + manuell), schreibt `result.json` ins Repo. Das Frontend liest/schreibt Config nur über die API (GitHub-Token nie im Browser).
+**„Privat“** meint geschützten Zugang (Basic Auth + Secrets in Vercel-Env), nicht geschlossenen Quellcode: `web/` liegt in **`ess`** und wird mit public sichtbar — API-Routen und Auth laufen serverseitig, Tokens nie im Browser.
+
+**Datenfluss:** GUI ↔ serverseitige API ↔ **privates** GitHub-Repo `ess-data` (`config.yaml`, `result.json`, optional `settings.json`). Der Scraper läuft in **GitHub Actions** im public Repo `ess` (Cron + manuell), schreibt nur `result.json` nach `ess-data`. Config/Settings liest die Action aus `ess-data` per `--config` / `--settings`.
 
 **Auth:** Basic Auth vor der ganzen App („htpasswd“-Feeling) — reicht für wenige Nutzer.
 
 **Bereits erledigt (CLI-Grundlage):** strukturiertes `result.json` (`location`, `date`, `url`), Config-Einträge mit `{name, active}` — GUI kann darauf aufsetzen.
 
-**Architektur:** Scraper-Workflow in **`ess`** (public, Actions gratis) · Config/Result in **`ess-data`** (private) · GUI in **`web/`** (Vercel).
+**Architektur:** Scraper-Workflow in **`ess`** (public, Actions gratis) · Config/Result in **`ess-data`** (private) · GUI in **`web/`** (Vercel, Quellcode in `ess`).
 
 ---
 
 ### Tasks (kleine Schritte)
 
-Reihenfolge einhalten — jeder Punkt ist ein abgeschlossener Mini-Schritt.
+Reihenfolge einhalten — jeder Punkt ist ein abgeschlossener Mini-Schritt. **B0** zuerst; **A**, **B** und **C** vor **D** (B und C können parallel).
+
+#### B0 — CLI für Cloud (vor Action)
+
+- [ ] `--settings PATH` — technische Settings (Default: `settings.json`, analog zu `--config`)
+- [ ] `--quiet` — keine Treffer-Namen auf stdout (für öffentliche Actions-Logs)
+- [ ] README Nutzung: `--settings`, `--quiet` dokumentieren
 
 #### A — Privates Daten-Repo
 
-- [ ] GitHub-Repo `ess-data` anlegen (private)
+- [ ] GitHub-Repo `ess-data` anlegen (private, Branch `main`)
 - [ ] `config.yaml` aus `config.example.yaml` + Platzhalter-Namen anlegen
-- [ ] Leeres `result.json` anlegen: `{"gefundene_reiter":{},"gefundene_pferde":{}}`
-- [ ] Optional: `settings.json` aus `settings.example.json` (Cloud-Werte konservativ)
+- [ ] Leeres `result.json` anlegen: `{"gefundene_pferde":{},"gefundene_reiter":{}}` (wie `empty_result()`)
+- [ ] Optional: `settings.json` aus `settings.example.json` (Cloud-Werte konservativ: weniger Workers, längerer Delay)
 
 #### B — Repo `ess` public machen
 
-Vor Block C — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen (`ess` ist derzeit **private**).
+Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen (`ess` ist derzeit **private**).
 
-- [ ] Prüfen: keine `config.yaml`, `result.json`, `settings.json`, `.env` im Repo oder in der Git-History
-- [ ] `.gitignore` und `*.example.*`-Vorlagen reichen; echte Daten nur lokal bzw. in `ess-data`
+- [ ] History prüfen, ob echte Namen/Daten je committed waren:
+  ```bash
+  git log --all --full-history --oneline -- config.yaml result.json settings.json .env
+  git show <commit>:config.yaml    # jede relevante Revision
+  ```
+  Stand Check Aug 2026: nur Platzhalter (`Max Mustermann`, `Epona`) — kein Rewrite nötig. Bei echten Namen: History bereinigen (`git filter-repo` / BFG) **oder** neues Repo ohne History.
+- [ ] Aktuell: keine `config.yaml`, `result.json`, `settings.json`, `.env` im Working Tree (nur `*.example.*` + `.gitignore`)
 - [ ] GitHub: `stormhurricane/ess` → Settings → Change visibility → **public**
 - [ ] Kurz verifizieren: Workflow-Tab sichtbar, kein Secret im Code
 
 #### C — Token & Secrets
 
 - [ ] Fine-grained PAT anlegen (nur Repo `ess-data`, Contents read/write)
-- [ ] Secret `ESS_DATA_TOKEN` im **public** Repo `ess` hinterlegen
+- [ ] Secret `ESS_DATA_TOKEN` im Repo `ess` hinterlegen (für Action-Checkout/Push nach `ess-data`)
 - [ ] Optional: Secret `ESS_DATA_REPO` = `stormhurricane/ess-data` (falls nicht hardcoded)
 
 #### D — GitHub Action (Scrape, noch ohne GUI)
 
 - [ ] `.github/workflows/scrape.yml` anlegen (Trigger: nur `workflow_dispatch` zuerst)
 - [ ] Job: `runs-on: ubuntu-latest`
+- [ ] Step: `actions/setup-python` (z. B. 3.12)
 - [ ] Step: `ess`-Code checkout (Default)
 - [ ] Step: `ess-data` checkout nach `./data` mit `ESS_DATA_TOKEN`
 - [ ] Step: `pip install -r requirements.txt`
-- [ ] Step: `python main.py --config data/config.yaml --output data/result.json`
-- [ ] Step: Commit + Push nur wenn `result.json` geändert (`ESS_DATA_TOKEN`)
-- [ ] Manuell testen: Actions → Run workflow → `result.json` in `ess-data` prüfen
+- [ ] Step: `python main.py --config data/config.yaml --settings data/settings.json --output data/result.json --quiet`
+- [ ] Step: in `ess-data` nur `result.json` committen (`git add result.json`; nie `git add .` / `config.yaml`)
+- [ ] Step: `git config user.name` / `user.email`; Push nur bei Änderung an `result.json` (`ESS_DATA_TOKEN`)
+- [ ] Manuell testen: Actions → Run workflow → `result.json` in `ess-data` prüfen; Log enthält keine Reiter-/Pferdenamen
 - [ ] Optional: `actions/cache` für `.cache/` (schnellere Folgeläufe)
 - [ ] Cron ergänzen (z. B. `0 6 * * *`) — erst wenn manueller Lauf stabil
 
@@ -285,7 +300,7 @@ Vor Block C — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen (`e
 
 - [ ] Layout/Navigation (Config | Treffer)
 - [ ] Seite **Treffer:** Liste aus `GET /api/results`, Links klickbar
-- [ ] Seite **Config:** Reiter/Pferde read-only anzeigen
+- [ ] Seite **Config:** Reiter, Pferde, `nations` read-only anzeigen
 - [ ] Leerzustände + Lade-/Fehleranzeige
 - [ ] Deploy auf Vercel, End-to-End testen (Auth → Daten sichtbar)
 
@@ -301,8 +316,8 @@ Vor Block C — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen (`e
 
 #### I — Scrape aus der GUI
 
-- [ ] Fine-grained PAT oder `GITHUB_TOKEN`-Scope: Actions read/write auf **`ess`**
-- [ ] Secret `ESS_WORKFLOW_TOKEN` in Vercel (falls anderer Token als `ESS_DATA_TOKEN`)
+- [ ] Fine-grained PAT mit Actions read/write auf **`ess`** (nur Workflow anstoßen; `GITHUB_TOKEN` existiert nur *in* Actions, nicht auf Vercel)
+- [ ] Secret `ESS_WORKFLOW_TOKEN` in Vercel (getrennt von `ESS_DATA_TOKEN`)
 - [ ] `POST /api/scrape` — `workflow_dispatch` für `scrape.yml`
 - [ ] `GET /api/scrape/status` — letzter Workflow-Lauf (Status, Zeit)
 - [ ] UI: Button „Jetzt scrapen“ + Status/Spinner + Hinweis „Ergebnis in ~X Min“
@@ -320,6 +335,7 @@ Vor Block C — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen (`e
 
 | Phase | Tasks | Ergebnis |
 | ----- | ----- | -------- |
+| **0** | B0 | CLI: `--settings`, `--quiet` |
 | **1** | A + B + C + D | `ess` public, Scrape in Actions, Result in `ess-data` |
 | **2** | E + F + G | Web-App zeigt Config + Treffer (read-only) |
 | **3** | H + I | Config editierbar, Scrape per Knopf |
