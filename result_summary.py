@@ -20,7 +20,9 @@ def _hit_locations(hits: list) -> str:
     return ", ".join(locations)
 
 
-def print_result_summary(result_dict: dict, output_path: str) -> None:
+def print_result_summary(
+    result_dict: dict, output_path: str, *, quiet: bool = False
+) -> None:
     riders = result_dict.get("gefundene_reiter") or {}
     horses = result_dict.get("gefundene_pferde") or {}
     rider_count = len(riders)
@@ -38,9 +40,10 @@ def print_result_summary(result_dict: dict, output_path: str) -> None:
             label = "horse" if horse_count == 1 else "horses"
             parts.append(f"{horse_count} {label}")
         print(f"Found {' and '.join(parts)} across {event_count} event(s).")
-        for name in sorted(riders):
-            print(f"  {name} → {_hit_locations(riders[name])}")
-        for name in sorted(horses):
-            print(f"  {name} → {_hit_locations(horses[name])}")
+        if not quiet:
+            for name in sorted(riders):
+                print(f"  {name} → {_hit_locations(riders[name])}")
+            for name in sorted(horses):
+                print(f"  {name} → {_hit_locations(horses[name])}")
 
     print(f"Wrote {output_path}")

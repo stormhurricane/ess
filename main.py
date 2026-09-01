@@ -121,7 +121,7 @@ def main(argv: list[str] | None = None) -> None:
             print(f"Progress: {'{:.1%}'.format(done / no_of_events)}")
 
     write_result(result_dict, settings["output"])
-    print_result_summary(result_dict, settings["output"])
+    print_result_summary(result_dict, settings["output"], quiet=args.quiet)
 
 
 if __name__ == "__main__":

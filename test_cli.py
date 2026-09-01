@@ -11,6 +11,7 @@ class ParseArgsTests(unittest.TestCase):
         self.assertEqual(args.settings, SETTINGS_PATH)
         self.assertIsNone(args.output)
         self.assertFalse(args.no_cache)
+        self.assertFalse(args.quiet)
 
     def test_config_and_output(self):
         args = parse_args(["--config", "other.yaml", "--output", "out.json"])
@@ -25,6 +26,10 @@ class ParseArgsTests(unittest.TestCase):
     def test_no_cache(self):
         args = parse_args(["--no-cache"])
         self.assertTrue(args.no_cache)
+
+    def test_quiet(self):
+        args = parse_args(["--quiet"])
+        self.assertTrue(args.quiet)
 
 
 if __name__ == "__main__":

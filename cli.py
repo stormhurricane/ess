@@ -28,4 +28,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Ignore cached HTTP responses; still writes fresh responses to .cache/",
     )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Do not print matched rider/horse names on stdout (for public CI logs)",
+    )
     return parser.parse_args(argv)
