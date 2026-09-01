@@ -1,5 +1,7 @@
 import argparse
 
+from settings import SETTINGS_PATH
+
 CONFIG_PATH = "config.yaml"
 
 
@@ -11,6 +13,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--config",
         default=CONFIG_PATH,
         help=f"Search config YAML (default: {CONFIG_PATH})",
+    )
+    parser.add_argument(
+        "--settings",
+        default=SETTINGS_PATH,
+        help=f"Technical settings JSON (default: {SETTINGS_PATH})",
     )
     parser.add_argument(
         "--output",

@@ -58,7 +58,7 @@ def write_result(result_dict: dict, path: str) -> None:
 
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
-    settings = load_settings()
+    settings = load_settings(args.settings)
     if args.output:
         path = args.output.strip()
         if path:
