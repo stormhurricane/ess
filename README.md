@@ -285,7 +285,7 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 
 #### D — GitHub Action (Scrape, noch ohne GUI)
 
-- [ ] **D1** — `.github/workflows/scrape.yml` anlegen (Trigger: nur `workflow_dispatch`)
+- [x] **D1** — `.github/workflows/scrape.yml` anlegen (Trigger: nur `workflow_dispatch`)
   - Job: `runs-on: ubuntu-latest`
   - `actions/setup-python` (z. B. 3.12)
   - `ess`-Code checkout (Default)
