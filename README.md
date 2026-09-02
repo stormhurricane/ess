@@ -32,13 +32,15 @@ python main.py --config other.yaml --output woche.json --no-cache
 python main.py --config data/config.yaml --settings data/settings.json --output data/result.json --quiet
 ```
 
-| Flag | Wirkung |
-| ---- | ------- |
-| `--config PATH` | Such-Config (Default: `config.yaml`) |
-| `--settings PATH` | Technische Settings (Default: `settings.json`) |
-| `--output PATH` | Ergebnis-JSON (überschreibt `settings.json` → `output`) |
-| `--no-cache` | Cache nicht lesen; frische HTTP-Antworten (schreibt weiter nach `.cache/`) |
-| `--quiet` | Keine Treffer-Namen auf stdout (nur Zähler + `Wrote …`; für öffentliche CI-Logs) |
+
+| Flag              | Wirkung                                                                          |
+| ----------------- | -------------------------------------------------------------------------------- |
+| `--config PATH`   | Such-Config (Default: `config.yaml`)                                             |
+| `--settings PATH` | Technische Settings (Default: `settings.json`)                                   |
+| `--output PATH`   | Ergebnis-JSON (überschreibt `settings.json` → `output`)                          |
+| `--no-cache`      | Cache nicht lesen; frische HTTP-Antworten (schreibt weiter nach `.cache/`)       |
+| `--quiet`         | Keine Treffer-Namen auf stdout (nur Zähler + `Wrote …`; für öffentliche CI-Logs) |
+
 
 Das Skript:
 
@@ -222,7 +224,7 @@ CLI (`python main.py` + lokale `config.yaml`) bleibt. Web und Actions kommen **d
 
 Kleine **privat zugängliche** Web-App (Vercel): Config pflegen, letzte Treffer ansehen, Scrape per Knopf oder Cron anstoßen. Kein öffentlicher Index, keine Roh-HTML-Suche — nur das, was heute schon die CLI macht, aber ohne Terminal.
 
-**„Privat“** meint geschützten Zugang (Basic Auth + Secrets in Vercel-Env), nicht geschlossenen Quellcode: `web/` liegt in **`ess`** und wird mit public sichtbar — API-Routen und Auth laufen serverseitig, Tokens nie im Browser.
+**„Privat“** meint geschützten Zugang (Basic Auth + Secrets in Vercel-Env), nicht geschlossenen Quellcode: `web/` liegt in `ess` und wird mit public sichtbar — API-Routen und Auth laufen serverseitig, Tokens nie im Browser.
 
 **Datenfluss:** GUI ↔ serverseitige API ↔ **privates** GitHub-Repo `ess-data` (`config.yaml`, `result.json`, optional `settings.json`). Der Scraper läuft in **GitHub Actions** im public Repo `ess` (Cron + manuell), schreibt nur `result.json` nach `ess-data`. Config/Settings liest die Action aus `ess-data` per `--config` / `--settings`.
 
@@ -230,9 +232,11 @@ Kleine **privat zugängliche** Web-App (Vercel): Config pflegen, letzte Treffer 
 
 **Bereits erledigt (CLI-Grundlage):** strukturiertes `result.json` (`location`, `date`, `url`), Config-Einträge mit `{name, active}` — GUI kann darauf aufsetzen.
 
-**Architektur:** Scraper-Workflow in **`ess`** (public, Actions gratis) · Config/Result in **`ess-data`** (private) · GUI in **`web/`** (Vercel, Quellcode in `ess`).
+**Architektur:** Scraper-Workflow in `ess` (public, Actions gratis) · Config/Result in `ess-data` (private) · GUI in `web/` (Vercel, Quellcode in `ess`).
 
 ---
+
+
 
 ### Tasks (kleine Schritte)
 
@@ -244,12 +248,16 @@ Reihenfolge einhalten — jeder Punkt ist ein abgeschlossener Mini-Schritt. **B0
 - [x] `--quiet` — keine Treffer-Namen auf stdout (für öffentliche Actions-Logs)
 - [x] README Nutzung: `--settings`, `--quiet` dokumentieren
 
+
+
 #### A — Privates Daten-Repo
 
 - [x] GitHub-Repo `ess-data` anlegen (private, Branch `main`)
 - [x] `config.yaml` aus `config.example.yaml` + Platzhalter-Namen anlegen
 - [x] Leeres `result.json` anlegen: `{"gefundene_pferde":{},"gefundene_reiter":{}}` (wie `empty_result()`)
 - [x] Optional: `settings.json` aus `settings.example.json` (Cloud-Werte konservativ: weniger Workers, längerer Delay)
+
+
 
 #### B — Repo `ess` public machen
 
@@ -265,26 +273,32 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 - [x] GitHub: `stormhurricane/ess` → Settings → Change visibility → **public**
 - [x] Kurz verifizieren: Workflow-Tab sichtbar, kein Secret im Code (Sep 2026: Actions aktiv, 0 Workflows bis Task D; keine Repo-Secrets; Code-Scan ok)
 
+
+
 #### C — Token & Secrets
 
 - [x] Fine-grained PAT anlegen (nur Repo `ess-data`, Contents read/write)
 - [x] Secret `ESS_DATA_TOKEN` im Repo `ess` hinterlegen (für Action-Checkout/Push nach `ess-data`)
 - [x] Optional: Secret `ESS_DATA_REPO` = `stormhurricane/ess-data` (falls nicht hardcoded)
 
+
+
 #### D — GitHub Action (Scrape, noch ohne GUI)
 
-- [ ] `.github/workflows/scrape.yml` anlegen (Trigger: nur `workflow_dispatch` zuerst)
-- [ ] Job: `runs-on: ubuntu-latest`
-- [ ] Step: `actions/setup-python` (z. B. 3.12)
-- [ ] Step: `ess`-Code checkout (Default)
-- [ ] Step: `ess-data` checkout nach `./data` mit `ESS_DATA_TOKEN`
-- [ ] Step: `pip install -r requirements.txt`
-- [ ] Step: `python main.py --config data/config.yaml --settings data/settings.json --output data/result.json --quiet`
-- [ ] Step: in `ess-data` nur `result.json` committen (`git add result.json`; nie `git add .` / `config.yaml`)
-- [ ] Step: `git config user.name` / `user.email`; Push nur bei Änderung an `result.json` (`ESS_DATA_TOKEN`)
-- [ ] Manuell testen: Actions → Run workflow → `result.json` in `ess-data` prüfen; Log enthält keine Reiter-/Pferdenamen
-- [ ] Optional: `actions/cache` für `.cache/` (schnellere Folgeläufe)
-- [ ] Cron ergänzen (z. B. `0 6 * * *`) — erst wenn manueller Lauf stabil
+- [ ] **D1** — `.github/workflows/scrape.yml` anlegen (Trigger: nur `workflow_dispatch`)
+  - Job: `runs-on: ubuntu-latest`
+  - `actions/setup-python` (z. B. 3.12)
+  - `ess`-Code checkout (Default)
+  - `ess-data` checkout nach `./data` (`ESS_DATA_TOKEN`, Repo aus `ESS_DATA_REPO` oder hardcoded)
+  - `pip install -r requirements.txt`
+  - `python main.py --config data/config.yaml --settings data/settings.json --output data/result.json --quiet`
+  - in `ess-data` nur `result.json` committen (`git add result.json`; nie `git add .` / `config.yaml`)
+  - `git config user.name` / `user.email`; Push nur bei Änderung an `result.json` (`ESS_DATA_TOKEN`)
+- [ ] **D2** — Manuell testen: Actions → Run workflow → `result.json` in `ess-data` prüfen; Log enthält keine Reiter-/Pferdenamen
+- [ ] **D3** — Optional: `actions/cache` für `.cache/` (schnellere Folgeläufe)
+- [ ] **D4** — Cron ergänzen (z. B. `0 6 * * *`) — erst wenn D2 stabil
+
+
 
 #### E — Vercel-Grundgerüst (read-only)
 
@@ -293,11 +307,15 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 - [ ] Middleware: Basic Auth auf allen Routen außer `/api/health` (optional)
 - [ ] Vercel-Projekt mit Root `web/` verbinden
 
+
+
 #### F — API read-only
 
 - [ ] `GET /api/config` — GitHub Contents API → YAML parsen → JSON
 - [ ] `GET /api/results` — GitHub Contents API → `result.json` parsen
 - [ ] Fehlerfälle: 404, Token fehlt, ungültiges JSON → klare HTTP-Status
+
+
 
 #### G — GUI read-only (erster sichtbarer Meilenstein)
 
@@ -306,6 +324,8 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 - [ ] Seite **Config:** Reiter, Pferde, `nations` read-only anzeigen
 - [ ] Leerzustände + Lade-/Fehleranzeige
 - [ ] Deploy auf Vercel, End-to-End testen (Auth → Daten sichtbar)
+
+
 
 #### H — Config schreiben
 
@@ -317,13 +337,17 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 - [ ] Config-UI: `nations` bearbeiten
 - [ ] Speichern mit Feedback (Loading, Erfolg, Fehler)
 
+
+
 #### I — Scrape aus der GUI
 
-- [ ] Fine-grained PAT mit Actions read/write auf **`ess`** (nur Workflow anstoßen; `GITHUB_TOKEN` existiert nur *in* Actions, nicht auf Vercel)
+- [ ] Fine-grained PAT mit Actions read/write auf `ess` (nur Workflow anstoßen; `GITHUB_TOKEN` existiert nur *in* Actions, nicht auf Vercel)
 - [ ] Secret `ESS_WORKFLOW_TOKEN` in Vercel (getrennt von `ESS_DATA_TOKEN`)
 - [ ] `POST /api/scrape` — `workflow_dispatch` für `scrape.yml`
 - [ ] `GET /api/scrape/status` — letzter Workflow-Lauf (Status, Zeit)
 - [ ] UI: Button „Jetzt scrapen“ + Status/Spinner + Hinweis „Ergebnis in ~X Min“
+
+
 
 #### J — Feinschliff
 
@@ -334,17 +358,23 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 
 ---
 
+
+
 ### Phase-Übersicht (Referenz)
 
-| Phase | Tasks | Ergebnis |
-| ----- | ----- | -------- |
-| **0** | B0 | CLI: `--settings`, `--quiet` |
+
+| Phase | Tasks         | Ergebnis                                              |
+| ----- | ------------- | ----------------------------------------------------- |
+| **0** | B0            | CLI: `--settings`, `--quiet`                          |
 | **1** | A + B + C + D | `ess` public, Scrape in Actions, Result in `ess-data` |
-| **2** | E + F + G | Web-App zeigt Config + Treffer (read-only) |
-| **3** | H + I | Config editierbar, Scrape per Knopf |
-| **4** | J | Polish |
+| **2** | E + F + G     | Web-App zeigt Config + Treffer (read-only)            |
+| **3** | H + I         | Config editierbar, Scrape per Knopf                   |
+| **4** | J             | Polish                                                |
+
 
 ---
+
+
 
 ### Bewusst später / nicht v1 GUI
 
