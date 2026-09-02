@@ -255,12 +255,12 @@ Reihenfolge einhalten — jeder Punkt ist ein abgeschlossener Mini-Schritt. **B0
 
 Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen (`ess` ist derzeit **private**).
 
-- [ ] History prüfen, ob echte Namen/Daten je committed waren:
+- [x] History prüfen, ob echte Namen/Daten je committed waren:
   ```bash
   git log --all --full-history --oneline -- config.yaml result.json settings.json .env
   git show <commit>:config.yaml    # jede relevante Revision
   ```
-  Stand Check Aug 2026: nur Platzhalter (`Max Mustermann`, `Epona`) — kein Rewrite nötig. Bei echten Namen: History bereinigen (`git filter-repo` / BFG) **oder** neues Repo ohne History.
+  Stand Check Sep 2026: `config.yaml` nur in `9c3db14`/`f038a80` — Platzhalter (`Max Mustermann`, `Epona`, `Deutschland`). `result.json`, `settings.json`, `.env` nie in History. **Kein Rewrite nötig.** Bei echten Namen: History bereinigen (`git filter-repo` / BFG) **oder** neues Repo ohne History.
 - [ ] Aktuell: keine `config.yaml`, `result.json`, `settings.json`, `.env` im Working Tree (nur `*.example.*` + `.gitignore`)
 - [ ] GitHub: `stormhurricane/ess` → Settings → Change visibility → **public**
 - [ ] Kurz verifizieren: Workflow-Tab sichtbar, kein Secret im Code
