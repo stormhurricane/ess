@@ -267,9 +267,9 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 
 #### C — Token & Secrets
 
-- [ ] Fine-grained PAT anlegen (nur Repo `ess-data`, Contents read/write)
-- [ ] Secret `ESS_DATA_TOKEN` im Repo `ess` hinterlegen (für Action-Checkout/Push nach `ess-data`)
-- [ ] Optional: Secret `ESS_DATA_REPO` = `stormhurricane/ess-data` (falls nicht hardcoded)
+- [x] Fine-grained PAT anlegen (nur Repo `ess-data`, Contents read/write)
+- [x] Secret `ESS_DATA_TOKEN` im Repo `ess` hinterlegen (für Action-Checkout/Push nach `ess-data`)
+- [x] Optional: Secret `ESS_DATA_REPO` = `stormhurricane/ess-data` (falls nicht hardcoded)
 
 #### D — GitHub Action (Scrape, noch ohne GUI)
 
