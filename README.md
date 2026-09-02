@@ -261,9 +261,9 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
   git show <commit>:config.yaml    # jede relevante Revision
   ```
   Stand Check Sep 2026: `config.yaml` nur in `9c3db14`/`f038a80` — Platzhalter (`Max Mustermann`, `Epona`, `Deutschland`). `result.json`, `settings.json`, `.env` nie in History. **Kein Rewrite nötig.** Bei echten Namen: History bereinigen (`git filter-repo` / BFG) **oder** neues Repo ohne History.
-- [ ] Aktuell: keine `config.yaml`, `result.json`, `settings.json`, `.env` im Working Tree (nur `*.example.*` + `.gitignore`)
-- [ ] GitHub: `stormhurricane/ess` → Settings → Change visibility → **public**
-- [ ] Kurz verifizieren: Workflow-Tab sichtbar, kein Secret im Code
+- [x] Aktuell: keine `config.yaml`, `result.json`, `settings.json`, `.env` getrackt (nur `*.example.*` + `.gitignore`; lokale gitignored Kopien ok)
+- [x] GitHub: `stormhurricane/ess` → Settings → Change visibility → **public**
+- [x] Kurz verifizieren: Workflow-Tab sichtbar, kein Secret im Code (Sep 2026: Actions aktiv, 0 Workflows bis Task D; keine Repo-Secrets; Code-Scan ok)
 
 #### C — Token & Secrets
 
