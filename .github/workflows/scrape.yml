@@ -25,6 +25,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Cache HTTP responses
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: ess-http-${{ runner.os }}-v1
+          restore-keys: |
+            ess-http-${{ runner.os }}-
+
       - name: Run scraper
         run: >
           python main.py
