@@ -294,7 +294,8 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
   - `python main.py --config data/config.yaml --settings data/settings.json --output data/result.json --quiet`
   - in `ess-data` nur `result.json` committen (`git add result.json`; nie `git add .` / `config.yaml`)
   - `git config user.name` / `user.email`; Push nur bei Änderung an `result.json` (`ESS_DATA_TOKEN`)
-- [ ] **D2** — Manuell testen: Actions → Run workflow → `result.json` in `ess-data` prüfen; Log enthält keine Reiter-/Pferdenamen
+- [x] **D2** — Manuell testen: Actions → Run workflow → `result.json` in `ess-data` prüfen; Log enthält keine Reiter-/Pferdenamen
+  (Sep 2026: Run [33680770281](https://github.com/stormhurricane/ess/actions/runs/33680770281) success; ess-data commit `95e9ed1`; Logs ohne Namen)
 - [ ] **D3** — Optional: `actions/cache` für `.cache/` (schnellere Folgeläufe)
 - [ ] **D4** — Cron ergänzen (z. B. `0 6 * * *`) — erst wenn D2 stabil
 
