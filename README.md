@@ -297,7 +297,7 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 - [x] **D2** — Manuell testen: Actions → Run workflow → `result.json` in `ess-data` prüfen; Log enthält keine Reiter-/Pferdenamen
   (Sep 2026: Run [33680770281](https://github.com/stormhurricane/ess/actions/runs/33680770281) success; ess-data commit `95e9ed1`; Logs ohne Namen)
 - [x] **D3** — Optional: `actions/cache` für `.cache/` (schnellere Folgeläufe; Frische über `cache_hours` / `cache_max_age_days`)
-- [ ] **D4** — Cron ergänzen (z. B. `0 6 * * *`) — erst wenn D2 stabil
+- [x] **D4** — Cron ergänzen (`0 6 * * *` = täglich 06:00 UTC) — erst wenn D2 stabil
 
 
 
