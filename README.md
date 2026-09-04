@@ -303,10 +303,10 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 
 #### E — Vercel-Grundgerüst (read-only)
 
-- [ ] Ordner `web/` — Next.js App scaffolden
-- [ ] Env in Vercel: `ESS_DATA_TOKEN`, `ESS_DATA_REPO`, Basic-Auth-User/Pass
-- [ ] Middleware: Basic Auth auf allen Routen außer `/api/health` (optional)
-- [ ] Vercel-Projekt mit Root `web/` verbinden
+- [x] **E1** — Ordner `web/` — Next.js App scaffolden (App Router, TypeScript)
+- [ ] **E2** — Env in Vercel: `ESS_DATA_TOKEN`, `ESS_DATA_REPO`, Basic-Auth-User/Pass
+- [ ] **E3** — Middleware: Basic Auth auf allen Routen außer `/api/health` (optional)
+- [ ] **E4** — Vercel-Projekt mit Root `web/` verbinden
 
 
 
