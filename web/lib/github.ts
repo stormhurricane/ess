@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
 
+/**
+ * Shared GitHub Contents errors for /api/config and /api/results:
+ * - 404: file missing in ess-data
+ * - 500: ESS_DATA_TOKEN / ESS_DATA_REPO missing or malformed
+ * - 502: GitHub upstream failure, or invalid YAML/JSON payload
+ * Responses use JSON body `{ "error": string }`.
+ */
 export class GithubFileError extends Error {
   constructor(
     message: string,

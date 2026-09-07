@@ -314,7 +314,8 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 
 - [x] `GET /api/config` — GitHub Contents API → YAML parsen → JSON
 - [x] `GET /api/results` — GitHub Contents API → `result.json` parsen
-- [ ] Fehlerfälle: 404, Token fehlt, ungültiges JSON → klare HTTP-Status
+- [x] Fehlerfälle: 404, Token fehlt, ungültiges JSON → klare HTTP-Status
+  (`lib/github.ts` + beide Routen: 404 Datei fehlt · 500 Env/`ESS_DATA_REPO` · 502 GitHub/Parse · Body `{ "error": "…" }`)
 
 
 
