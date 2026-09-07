@@ -312,7 +312,7 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 
 #### F — API read-only
 
-- [ ] `GET /api/config` — GitHub Contents API → YAML parsen → JSON
+- [x] `GET /api/config` — GitHub Contents API → YAML parsen → JSON
 - [ ] `GET /api/results` — GitHub Contents API → `result.json` parsen
 - [ ] Fehlerfälle: 404, Token fehlt, ungültiges JSON → klare HTTP-Status
 
