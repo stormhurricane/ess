@@ -1,20 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import type { ApiErrorBody, ConfigEntry, ConfigPayload } from "@/lib/types";
-
-type LoadState =
-  | { status: "loading" }
-  | { status: "error"; message: string }
-  | { status: "ok"; data: ConfigPayload };
+import {
+  EmptyMessage,
+  ErrorMessage,
+  LoadingMessage,
+} from "@/components/StatusMessage";
+import { useJsonGet } from "@/lib/useJsonGet";
+import type { ConfigEntry, ConfigPayload } from "@/lib/types";
 
 function entryDisplay(entry: ConfigEntry): { name: string; active: boolean } {
   if (typeof entry === "string") {
     return { name: entry.trim() || "(ohne Namen)", active: true };
   }
   const name = String(entry.name || entry.title || "").trim() || "(ohne Namen)";
-  const active = entry.active === undefined || entry.active === null ? true : Boolean(entry.active);
+  const active =
+    entry.active === undefined || entry.active === null
+      ? true
+      : Boolean(entry.active);
   return { name, active };
 }
 
@@ -31,7 +33,7 @@ function EntryList({
         <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">
           {title}
         </h2>
-        <p className="text-sm text-zinc-600">Keine Einträge.</p>
+        <EmptyMessage>Keine Einträge.</EmptyMessage>
       </section>
     );
   }
@@ -62,52 +64,19 @@ function EntryList({
 }
 
 export function ConfigView() {
-  const [state, setState] = useState<LoadState>({ status: "loading" });
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      setState({ status: "loading" });
-      try {
-        const res = await fetch("/api/config", { cache: "no-store" });
-        const body = (await res.json()) as ConfigPayload & ApiErrorBody;
-        if (!res.ok) {
-          throw new Error(body.error || `Fehler ${res.status}`);
-        }
-        if (cancelled) return;
-        setState({ status: "ok", data: body });
-      } catch (error) {
-        if (cancelled) return;
-        setState({
-          status: "error",
-          message:
-            error instanceof Error ? error.message : "Unbekannter Fehler",
-        });
-      }
-    }
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const state = useJsonGet<ConfigPayload>("/api/config");
 
   if (state.status === "loading") {
-    return <p className="text-zinc-600">Lade Config …</p>;
+    return <LoadingMessage>Lade Config …</LoadingMessage>;
   }
 
   if (state.status === "error") {
-    return (
-      <p className="text-red-700" role="alert">
-        {state.message}
-      </p>
-    );
+    return <ErrorMessage>{state.message}</ErrorMessage>;
   }
 
   const riders = state.data.riders ?? [];
   const horses = state.data.horses ?? [];
-  const nations = state.data.nations ?? [];
+  const nations = (state.data.nations ?? []).map(String);
 
   return (
     <div className="flex flex-col gap-10">
@@ -118,12 +87,14 @@ export function ConfigView() {
           Nationen
         </h2>
         {nations.length === 0 ? (
-          <p className="text-sm text-zinc-600">Keine Nationen (Default im Scraper: GER).</p>
+          <EmptyMessage>
+            Keine Nationen gesetzt (Scraper-Default: GER).
+          </EmptyMessage>
         ) : (
           <ul className="flex flex-wrap gap-2 text-sm">
-            {nations.map((code) => (
+            {nations.map((code, index) => (
               <li
-                key={code}
+                key={`${code}-${index}`}
                 className="rounded border border-zinc-200 bg-white px-2 py-1 font-medium text-zinc-900"
               >
                 {code}

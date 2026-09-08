@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-import type { ApiErrorBody, Hit, ResultsPayload } from "@/lib/types";
-
-type LoadState =
-  | { status: "loading" }
-  | { status: "error"; message: string }
-  | { status: "ok"; data: ResultsPayload };
+import {
+  EmptyMessage,
+  ErrorMessage,
+  LoadingMessage,
+} from "@/components/StatusMessage";
+import { useJsonGet } from "@/lib/useJsonGet";
+import type { Hit, ResultsPayload } from "@/lib/types";
 
 function HitList({ hits }: { hits: Hit[] }) {
   return (
@@ -65,47 +64,14 @@ function NameGroup({
 }
 
 export function TrefferList() {
-  const [state, setState] = useState<LoadState>({ status: "loading" });
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      setState({ status: "loading" });
-      try {
-        const res = await fetch("/api/results", { cache: "no-store" });
-        const body = (await res.json()) as ResultsPayload & ApiErrorBody;
-        if (!res.ok) {
-          throw new Error(body.error || `Fehler ${res.status}`);
-        }
-        if (cancelled) return;
-        setState({ status: "ok", data: body });
-      } catch (error) {
-        if (cancelled) return;
-        setState({
-          status: "error",
-          message:
-            error instanceof Error ? error.message : "Unbekannter Fehler",
-        });
-      }
-    }
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const state = useJsonGet<ResultsPayload>("/api/results");
 
   if (state.status === "loading") {
-    return <p className="text-zinc-600">Lade Treffer …</p>;
+    return <LoadingMessage>Lade Treffer …</LoadingMessage>;
   }
 
   if (state.status === "error") {
-    return (
-      <p className="text-red-700" role="alert">
-        {state.message}
-      </p>
-    );
+    return <ErrorMessage>{state.message}</ErrorMessage>;
   }
 
   const riders = state.data.gefundene_reiter ?? {};
@@ -114,7 +80,11 @@ export function TrefferList() {
     Object.keys(riders).length === 0 && Object.keys(horses).length === 0;
 
   if (empty) {
-    return <p className="text-zinc-600">Keine Treffer gefunden.</p>;
+    return (
+      <EmptyMessage>
+        Keine Treffer. Nach dem nächsten Scrape erscheinen hier Reiter und Pferde.
+      </EmptyMessage>
+    );
   }
 
   return (
