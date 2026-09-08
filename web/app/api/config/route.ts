@@ -1,7 +1,13 @@
 import { load as loadYaml } from "js-yaml";
 import { NextResponse } from "next/server";
 
-import { getRepoTextFile, GithubFileError, jsonError } from "@/lib/github";
+import { configToYaml, parseConfigBody } from "@/lib/config";
+import {
+  getRepoTextFile,
+  GithubFileError,
+  jsonError,
+  putRepoTextFile,
+} from "@/lib/github";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +27,24 @@ export async function GET() {
       );
     }
     return NextResponse.json(parsed);
+  } catch (error) {
+    return jsonError(error);
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      throw new GithubFileError("Request body must be valid JSON", 400);
+    }
+
+    const config = parseConfigBody(body);
+    const yaml = configToYaml(config);
+    await putRepoTextFile("config.yaml", yaml, "Update config.yaml via ESS GUI");
+    return NextResponse.json(config);
   } catch (error) {
     return jsonError(error);
   }
