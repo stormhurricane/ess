@@ -321,11 +321,11 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 
 #### G — GUI read-only (erster sichtbarer Meilenstein)
 
-- [ ] Layout/Navigation (Config | Treffer)
-- [ ] Seite **Treffer:** Liste aus `GET /api/results`, Links klickbar
-- [ ] Seite **Config:** Reiter, Pferde, `nations` read-only anzeigen
-- [ ] Leerzustände + Lade-/Fehleranzeige
-- [ ] Deploy auf Vercel, End-to-End testen (Auth → Daten sichtbar)
+- [x] **G1** — Layout/Navigation (Config | Treffer)
+- [ ] **G2** — Seite **Treffer:** Liste aus `GET /api/results`, Links klickbar
+- [ ] **G3** — Seite **Config:** Reiter, Pferde, `nations` read-only anzeigen
+- [ ] **G4** — Leerzustände + Lade-/Fehleranzeige
+- [ ] **G5** — Deploy auf Vercel, End-to-End testen (Auth → Daten sichtbar)
 
 
 
