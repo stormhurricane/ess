@@ -326,7 +326,7 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 - [x] **G3** — Seite **Config:** Reiter, Pferde, `nations` read-only anzeigen
 - [x] **G4** — Leerzustände + Lade-/Fehleranzeige
   (`StatusMessage` + `useJsonGet` auf Treffer und Config)
-- [ ] **G5** — Deploy auf Vercel, End-to-End testen (Auth → Daten sichtbar)
+- [x] **G5** — Deploy auf Vercel, End-to-End testen (Auth → Daten sichtbar)
 
 
 
