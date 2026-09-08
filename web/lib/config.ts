@@ -5,6 +5,16 @@ import type { ConfigEntry, ConfigPayload } from "@/lib/types";
 
 const ALLOWED_KEYS = new Set(["riders", "horses", "nations"]);
 
+/** Display name from string or {name|title}; empty/whitespace → null (like CLI). */
+function entryName(entry: ConfigEntry): string | null {
+  if (typeof entry === "string") {
+    const name = entry.trim();
+    return name || null;
+  }
+  const name = String(entry.name || entry.title || "").trim();
+  return name || null;
+}
+
 function assertConfigEntry(entry: unknown, label: string, index: number): void {
   if (typeof entry === "string") {
     return;
@@ -47,7 +57,38 @@ function assertConfigEntry(entry: unknown, label: string, index: number): void {
   }
 }
 
-/** Structural validation for PUT /api/config (empty names / duplicates → H2). */
+function assertNamedEntries(entries: ConfigEntry[], label: string): void {
+  const seen = new Set<string>();
+  entries.forEach((entry, index) => {
+    const name = entryName(entry);
+    if (!name) {
+      throw new GithubFileError(`${label}[${index}] name must not be empty`, 400);
+    }
+    if (seen.has(name)) {
+      throw new GithubFileError(
+        `${label} contains duplicate name: ${name}`,
+        400,
+      );
+    }
+    seen.add(name);
+  });
+}
+
+function assertNations(nations: string[]): void {
+  const seen = new Set<string>();
+  nations.forEach((raw, index) => {
+    const code = raw.trim();
+    if (!code) {
+      throw new GithubFileError(`nations[${index}] must not be empty`, 400);
+    }
+    if (seen.has(code)) {
+      throw new GithubFileError(`nations contains duplicate: ${code}`, 400);
+    }
+    seen.add(code);
+  });
+}
+
+/** Validate PUT /api/config body (structure + empty names / duplicates). */
 export function parseConfigBody(body: unknown): ConfigPayload {
   if (body === null || typeof body !== "object" || Array.isArray(body)) {
     throw new GithubFileError("Request body must be a JSON object", 400);
@@ -71,7 +112,9 @@ export function parseConfigBody(body: unknown): ConfigPayload {
       throw new GithubFileError(`${key} must be an array`, 400);
     }
     value.forEach((entry, index) => assertConfigEntry(entry, key, index));
-    out[key] = value as ConfigEntry[];
+    const entries = value as ConfigEntry[];
+    assertNamedEntries(entries, key);
+    out[key] = entries;
   }
 
   if ("nations" in raw) {
@@ -82,6 +125,7 @@ export function parseConfigBody(body: unknown): ConfigPayload {
     if (!value.every((item) => typeof item === "string")) {
       throw new GithubFileError("nations entries must be strings", 400);
     }
+    assertNations(value);
     out.nations = value;
   }
 

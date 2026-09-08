@@ -333,7 +333,7 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 #### H — Config schreiben
 
 - [x] **H1** — `PUT /api/config` — JSON validieren, YAML bauen, GitHub Contents API Update (SHA!)
-- [ ] **H2** — Validierung: leere Namen, Duplikate abweisen
+- [x] **H2** — Validierung: leere Namen, Duplikate abweisen
 - [ ] **H3** — Config-UI: Eintrag hinzufügen
 - [ ] **H4** — Config-UI: Toggle `active`
 - [ ] **H5** — Config-UI: Eintrag löschen
