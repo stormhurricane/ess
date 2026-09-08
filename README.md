@@ -323,7 +323,7 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 
 - [x] **G1** — Layout/Navigation (Config | Treffer)
 - [x] **G2** — Seite **Treffer:** Liste aus `GET /api/results`, Links klickbar
-- [ ] **G3** — Seite **Config:** Reiter, Pferde, `nations` read-only anzeigen
+- [x] **G3** — Seite **Config:** Reiter, Pferde, `nations` read-only anzeigen
 - [ ] **G4** — Leerzustände + Lade-/Fehleranzeige
 - [ ] **G5** — Deploy auf Vercel, End-to-End testen (Auth → Daten sichtbar)
 
