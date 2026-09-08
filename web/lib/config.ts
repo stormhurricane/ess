@@ -149,3 +149,16 @@ export function configToYaml(config: ConfigPayload): string {
     sortKeys: false,
   });
 }
+
+/** Commit subject for ess-data updates (date + short counts). */
+export function configCommitMessage(config: ConfigPayload, at = new Date()): string {
+  const stamp = at.toISOString().replace(/\.\d{3}Z$/, "Z");
+  const riders = config.riders?.length ?? 0;
+  const horses = config.horses?.length ?? 0;
+  const nations = config.nations ?? [];
+  const nationPart =
+    nations.length === 0
+      ? "no nations"
+      : `nations ${nations.join(",")}`;
+  return `Update config.yaml via ESS GUI (${stamp}): ${riders} riders, ${horses} horses, ${nationPart}`;
+}

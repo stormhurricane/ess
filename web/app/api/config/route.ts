@@ -1,7 +1,7 @@
 import { load as loadYaml } from "js-yaml";
 import { NextResponse } from "next/server";
 
-import { configToYaml, parseConfigBody } from "@/lib/config";
+import { configCommitMessage, configToYaml, parseConfigBody } from "@/lib/config";
 import {
   getRepoTextFile,
   GithubFileError,
@@ -43,7 +43,7 @@ export async function PUT(request: Request) {
 
     const config = parseConfigBody(body);
     const yaml = configToYaml(config);
-    await putRepoTextFile("config.yaml", yaml, "Update config.yaml via ESS GUI");
+    await putRepoTextFile("config.yaml", yaml, configCommitMessage(config));
     return NextResponse.json(config);
   } catch (error) {
     return jsonError(error);
