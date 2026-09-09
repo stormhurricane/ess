@@ -344,11 +344,11 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 
 #### I — Scrape aus der GUI
 
-- [ ] Fine-grained PAT mit Actions read/write auf `ess` (nur Workflow anstoßen; `GITHUB_TOKEN` existiert nur *in* Actions, nicht auf Vercel)
-- [ ] Secret `ESS_WORKFLOW_TOKEN` in Vercel (getrennt von `ESS_DATA_TOKEN`)
-- [ ] `POST /api/scrape` — `workflow_dispatch` für `scrape.yml`
-- [ ] `GET /api/scrape/status` — letzter Workflow-Lauf (Status, Zeit)
-- [ ] UI: Button „Jetzt scrapen“ + Status/Spinner + Hinweis „Ergebnis in ~X Min“
+- [x] **I1** — Fine-grained PAT mit Actions read/write auf `ess` (nur Workflow anstoßen; `GITHUB_TOKEN` existiert nur *in* Actions, nicht auf Vercel)
+- [x] **I2** — Secret `ESS_WORKFLOW_TOKEN` in Vercel (getrennt von `ESS_DATA_TOKEN`)
+- [ ] **I3** — `POST /api/scrape` — `workflow_dispatch` für `scrape.yml`
+- [ ] **I4** — `GET /api/scrape/status` — letzter Workflow-Lauf (Status, Zeit)
+- [ ] **I5** — UI: Button „Jetzt scrapen“ + Status/Spinner + Hinweis „Ergebnis in ~X Min“
 
 
 
