@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 
 /**
- * Shared GitHub Contents errors for /api/config and /api/results:
+ * Shared GitHub API errors for config/results/scrape routes:
  * - 400: invalid request body (PUT /api/config)
- * - 404: file missing in ess-data
+ * - 404: file or workflow missing
  * - 409: Contents API SHA conflict on update
- * - 500: ESS_DATA_TOKEN / ESS_DATA_REPO missing or malformed
+ * - 500: required env missing or malformed (ESS_DATA_* / ESS_WORKFLOW_*)
  * - 502: GitHub upstream failure, or invalid YAML/JSON payload
  * Responses use JSON body `{ "error": string }`.
  */
