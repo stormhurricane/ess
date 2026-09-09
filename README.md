@@ -348,7 +348,7 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 - [x] **I2** — Secret `ESS_WORKFLOW_TOKEN` in Vercel (getrennt von `ESS_DATA_TOKEN`)
 - [x] **I3** — `POST /api/scrape` — `workflow_dispatch` für `scrape.yml`
 - [x] **I4** — `GET /api/scrape/status` — letzter Workflow-Lauf (Status, Zeit)
-- [ ] **I5** — UI: Button „Jetzt scrapen“ + Status/Spinner + Hinweis „Ergebnis in ~X Min“
+- [x] **I5** — UI: Button „Jetzt scrapen“ + Status/Spinner + Hinweis „Ergebnis in ~X Min“
 
 
 
