@@ -2,6 +2,16 @@ import { GithubFileError } from "@/lib/github";
 
 const WORKFLOW_FILE = "scrape.yml";
 
+export type ScrapeRunStatus = {
+  id: number;
+  status: string;
+  conclusion: string | null;
+  event: string;
+  created_at: string;
+  updated_at: string;
+  html_url: string;
+};
+
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) {
@@ -44,6 +54,18 @@ function githubHeaders(token: string): HeadersInit {
   };
 }
 
+function workflowContext(): {
+  token: string;
+  owner: string;
+  name: string;
+  ref: string;
+} {
+  const token = requireEnv("ESS_WORKFLOW_TOKEN");
+  const { owner, name } = workflowRepo();
+  const ref = process.env.ESS_WORKFLOW_REF?.trim() || "main";
+  return { token, owner, name, ref };
+}
+
 /**
  * POST workflow_dispatch for scrape.yml on the code repo (ess).
  * Uses ESS_WORKFLOW_TOKEN; optional ESS_WORKFLOW_REPO / ESS_WORKFLOW_REF.
@@ -52,9 +74,7 @@ export async function dispatchScrapeWorkflow(): Promise<{
   workflow: string;
   ref: string;
 }> {
-  const token = requireEnv("ESS_WORKFLOW_TOKEN");
-  const { owner, name } = workflowRepo();
-  const ref = process.env.ESS_WORKFLOW_REF?.trim() || "main";
+  const { token, owner, name, ref } = workflowContext();
   const url = `https://api.github.com/repos/${owner}/${name}/actions/workflows/${WORKFLOW_FILE}/dispatches`;
 
   const res = await fetch(url, {
@@ -81,4 +101,74 @@ export async function dispatchScrapeWorkflow(): Promise<{
   }
 
   return { workflow: WORKFLOW_FILE, ref };
+}
+
+/** Latest scrape.yml workflow run (status + timestamps), or null if none. */
+export async function getLatestScrapeRun(): Promise<{
+  workflow: string;
+  run: ScrapeRunStatus | null;
+}> {
+  const { token, owner, name } = workflowContext();
+  const url = `https://api.github.com/repos/${owner}/${name}/actions/workflows/${WORKFLOW_FILE}/runs?per_page=1`;
+
+  const res = await fetch(url, {
+    headers: githubHeaders(token),
+    cache: "no-store",
+  });
+
+  if (res.status === 401 || res.status === 403) {
+    throw new GithubFileError("GitHub authentication or permission failed", 502);
+  }
+  if (res.status === 404) {
+    throw new GithubFileError(
+      `Workflow ${WORKFLOW_FILE} not found in ${owner}/${name}`,
+      404,
+    );
+  }
+  if (!res.ok) {
+    throw new GithubFileError(
+      `GitHub workflow runs error (${res.status})`,
+      502,
+    );
+  }
+
+  const body = (await res.json()) as {
+    workflow_runs?: Array<{
+      id?: number;
+      status?: string;
+      conclusion?: string | null;
+      event?: string;
+      created_at?: string;
+      updated_at?: string;
+      html_url?: string;
+    }>;
+  };
+
+  const latest = body.workflow_runs?.[0];
+  if (!latest) {
+    return { workflow: WORKFLOW_FILE, run: null };
+  }
+
+  if (
+    typeof latest.id !== "number" ||
+    typeof latest.status !== "string" ||
+    typeof latest.created_at !== "string" ||
+    typeof latest.updated_at !== "string" ||
+    typeof latest.html_url !== "string"
+  ) {
+    throw new GithubFileError("Unexpected GitHub workflow run payload", 502);
+  }
+
+  return {
+    workflow: WORKFLOW_FILE,
+    run: {
+      id: latest.id,
+      status: latest.status,
+      conclusion: latest.conclusion ?? null,
+      event: typeof latest.event === "string" ? latest.event : "unknown",
+      created_at: latest.created_at,
+      updated_at: latest.updated_at,
+      html_url: latest.html_url,
+    },
+  };
 }
