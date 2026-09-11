@@ -9,7 +9,7 @@ import {
   SuccessMessage,
 } from "@/components/StatusMessage";
 import { useJsonGet } from "@/lib/useJsonGet";
-import { friendlyApiError, friendlyCaughtError } from "@/lib/apiError";
+import { API_FETCH_INIT, friendlyApiError, friendlyCaughtError } from "@/lib/apiError";
 import type { ApiErrorBody, ConfigEntry, ConfigPayload } from "@/lib/types";
 
 type NamedEntry = { name: string; active: boolean };
@@ -253,10 +253,13 @@ function ConfigEditor({ initial }: { initial: Draft }) {
     setSaveState({ status: "saving" });
     try {
       const res = await fetch("/api/config", {
+        ...API_FETCH_INIT,
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          ...(API_FETCH_INIT.headers ?? {}),
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(toPayload(draft)),
-        cache: "no-store",
       });
       let body: (ConfigPayload & ApiErrorBody) | null = null;
       try {

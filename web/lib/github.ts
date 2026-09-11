@@ -152,11 +152,32 @@ export async function putRepoTextFile(
   }
 }
 
+/** Prevent CDN/browser from serving empty 304s for authed API GETs. */
+export const NO_STORE_HEADERS = {
+  "Cache-Control": "private, no-store, no-cache, must-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+  Vary: "Authorization",
+} as const;
+
+export function jsonOk(data: unknown, init?: { status?: number }): NextResponse {
+  return NextResponse.json(data, {
+    status: init?.status ?? 200,
+    headers: NO_STORE_HEADERS,
+  });
+}
+
 export function jsonError(error: unknown): NextResponse {
   if (error instanceof GithubFileError) {
-    return NextResponse.json({ error: error.message }, { status: error.status });
+    return NextResponse.json(
+      { error: error.message },
+      { status: error.status, headers: NO_STORE_HEADERS },
+    );
   }
   const message =
     error instanceof Error ? error.message : "Unexpected server error";
-  return NextResponse.json({ error: message }, { status: 500 });
+  return NextResponse.json(
+    { error: message },
+    { status: 500, headers: NO_STORE_HEADERS },
+  );
 }

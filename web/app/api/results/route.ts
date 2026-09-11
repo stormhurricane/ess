@@ -1,8 +1,12 @@
-import { NextResponse } from "next/server";
-
-import { getRepoTextFile, GithubFileError, jsonError } from "@/lib/github";
+import {
+  getRepoTextFile,
+  GithubFileError,
+  jsonError,
+  jsonOk,
+} from "@/lib/github";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET() {
   try {
@@ -19,7 +23,7 @@ export async function GET() {
         502,
       );
     }
-    return NextResponse.json(parsed);
+    return jsonOk(parsed);
   } catch (error) {
     return jsonError(error);
   }

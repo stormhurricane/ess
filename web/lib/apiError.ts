@@ -2,6 +2,18 @@
  * Map API / fetch errors to short German UI messages (J1).
  * Safe to call on already-friendly strings (returns them unchanged when unknown).
  */
+
+/** Shared fetch options so browsers/CDNs do not return empty 304 bodies. */
+export const API_FETCH_INIT: RequestInit = {
+  cache: "no-store",
+  // Needed so Basic Auth from the browser login prompt is sent on API calls.
+  credentials: "same-origin",
+  headers: {
+    "Cache-Control": "no-cache",
+    Pragma: "no-cache",
+  },
+};
+
 export function friendlyApiError(
   raw: string | undefined,
   status?: number,
@@ -9,7 +21,10 @@ export function friendlyApiError(
   const message = (raw ?? "").trim();
 
   if (status === 401) {
-    return "Anmeldung erforderlich oder Zugangsdaten falsch.";
+    return "Nicht angemeldet. Bitte unter /login anmelden.";
+  }
+  if (status === 304) {
+    return "Veraltete Zwischenspeicherung — bitte Seite neu laden (Hard-Reload).";
   }
   if (status === 403) {
     return "Kein Zugriff — Rechte oder Zugangsdaten prüfen.";
@@ -27,6 +42,9 @@ export function friendlyApiError(
     return "Konflikt: Die Config wurde parallel geändert. Bitte neu laden und erneut speichern.";
   }
 
+  if (/Invalid credentials|Authentication required/i.test(message)) {
+    return "Nicht angemeldet oder Zugangsdaten falsch.";
+  }
   if (/Missing environment variable/i.test(message)) {
     return "Server-Konfiguration unvollständig (Umgebungsvariable fehlt).";
   }

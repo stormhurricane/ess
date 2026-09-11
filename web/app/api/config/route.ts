@@ -1,15 +1,16 @@
 import { load as loadYaml } from "js-yaml";
-import { NextResponse } from "next/server";
 
 import { configCommitMessage, configToYaml, parseConfigBody } from "@/lib/config";
 import {
   getRepoTextFile,
   GithubFileError,
   jsonError,
+  jsonOk,
   putRepoTextFile,
 } from "@/lib/github";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET() {
   try {
@@ -26,7 +27,7 @@ export async function GET() {
         502,
       );
     }
-    return NextResponse.json(parsed);
+    return jsonOk(parsed);
   } catch (error) {
     return jsonError(error);
   }
@@ -44,7 +45,7 @@ export async function PUT(request: Request) {
     const config = parseConfigBody(body);
     const yaml = configToYaml(config);
     await putRepoTextFile("config.yaml", yaml, configCommitMessage(config));
-    return NextResponse.json(config);
+    return jsonOk(config);
   } catch (error) {
     return jsonError(error);
   }

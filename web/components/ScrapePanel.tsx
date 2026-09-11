@@ -7,7 +7,7 @@ import {
   LoadingMessage,
   SuccessMessage,
 } from "@/components/StatusMessage";
-import { friendlyApiError, friendlyCaughtError } from "@/lib/apiError";
+import { API_FETCH_INIT, friendlyApiError, friendlyCaughtError } from "@/lib/apiError";
 import type {
   ApiErrorBody,
   ScrapeDispatchPayload,
@@ -50,7 +50,10 @@ function statusLabel(run: ScrapeRun): string {
 }
 
 async function fetchStatus(): Promise<ScrapeStatusPayload> {
-  const res = await fetch("/api/scrape/status", { cache: "no-store" });
+  const res = await fetch("/api/scrape/status", API_FETCH_INIT);
+  if (res.status === 304) {
+    throw new Error(friendlyApiError(undefined, 304));
+  }
   let body: (ScrapeStatusPayload & ApiErrorBody) | null = null;
   try {
     body = (await res.json()) as ScrapeStatusPayload & ApiErrorBody;
@@ -110,8 +113,8 @@ export function ScrapePanel() {
     setActionInfo(null);
     try {
       const res = await fetch("/api/scrape", {
+        ...API_FETCH_INIT,
         method: "POST",
-        cache: "no-store",
       });
       let body: (ScrapeDispatchPayload & ApiErrorBody) | null = null;
       try {
