@@ -354,10 +354,10 @@ Vor Block **D** — damit Actions-Läufe **kein** Minuten-Kontingent verbrauchen
 
 #### J — Feinschliff
 
-- [ ] API-Fehler im UI verständlich anzeigen
-- [ ] README: Setup Abschnitt GUI/Cloud ergänzen
-- [ ] Optional: reduzierte Settings-Seite (`settings.json` read/write)
-- [ ] Optional: Responsives Layout nachziehen
+- [x] **J1** — API-Fehler im UI verständlich anzeigen
+- [ ] **J2** — README: Setup Abschnitt GUI/Cloud ergänzen
+- [ ] **J3** — Optional: reduzierte Settings-Seite (`settings.json` read/write)
+- [ ] **J4** — Optional: Responsives Layout nachziehen
 
 ---
 

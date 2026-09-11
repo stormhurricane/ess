@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { friendlyApiError, friendlyCaughtError } from "@/lib/apiError";
 import type { ApiErrorBody } from "@/lib/types";
 
 export type LoadState<T> =
@@ -24,13 +25,14 @@ export function useJsonGet<T>(url: string): LoadState<T> {
           body = (await res.json()) as T & ApiErrorBody;
         } catch {
           throw new Error(
-            res.ok
-              ? "Antwort ist kein gültiges JSON"
-              : `Fehler ${res.status}`,
+            friendlyApiError(
+              res.ok ? "Antwort ist kein gültiges JSON" : undefined,
+              res.ok ? undefined : res.status,
+            ),
           );
         }
         if (!res.ok) {
-          throw new Error(body?.error || `Fehler ${res.status}`);
+          throw new Error(friendlyApiError(body?.error, res.status));
         }
         if (cancelled) return;
         setState({ status: "ok", data: body as T });
@@ -38,8 +40,7 @@ export function useJsonGet<T>(url: string): LoadState<T> {
         if (cancelled) return;
         setState({
           status: "error",
-          message:
-            error instanceof Error ? error.message : "Unbekannter Fehler",
+          message: friendlyCaughtError(error),
         });
       }
     }

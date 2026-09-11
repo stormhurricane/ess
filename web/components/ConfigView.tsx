@@ -9,6 +9,7 @@ import {
   SuccessMessage,
 } from "@/components/StatusMessage";
 import { useJsonGet } from "@/lib/useJsonGet";
+import { friendlyApiError, friendlyCaughtError } from "@/lib/apiError";
 import type { ApiErrorBody, ConfigEntry, ConfigPayload } from "@/lib/types";
 
 type NamedEntry = { name: string; active: boolean };
@@ -262,11 +263,14 @@ function ConfigEditor({ initial }: { initial: Draft }) {
         body = (await res.json()) as ConfigPayload & ApiErrorBody;
       } catch {
         throw new Error(
-          res.ok ? "Antwort ist kein gültiges JSON" : `Fehler ${res.status}`,
+          friendlyApiError(
+            res.ok ? "Antwort ist kein gültiges JSON" : undefined,
+            res.ok ? undefined : res.status,
+          ),
         );
       }
       if (!res.ok) {
-        throw new Error(body?.error || `Fehler ${res.status}`);
+        throw new Error(friendlyApiError(body?.error, res.status));
       }
       const next = normalizePayload(body ?? toPayload(draft));
       setDraft(next);
@@ -275,8 +279,7 @@ function ConfigEditor({ initial }: { initial: Draft }) {
     } catch (error) {
       setSaveState({
         status: "error",
-        message:
-          error instanceof Error ? error.message : "Speichern fehlgeschlagen",
+        message: friendlyCaughtError(error, "Speichern fehlgeschlagen."),
       });
     }
   }
